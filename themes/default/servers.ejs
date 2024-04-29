@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%- include('./components/head') %>
+  <body>
+    <div style="background-color: #111319" class="container-scroller">
+      <!-- partial:partials/_sidebar.html -->
+      <%- include('./components/sidebar') %>
+      <!-- partial -->
+      <div style="background-color: #111319" class="container-fluid page-body-wrapper">
+        <!-- partial:partials/_navbar.html -->
+        <%- include('./components/topnav') %>
+        <!-- partial -->
+        <div style="background-color: #111319" class="main-panel">
+          <div style="background-color: #111319" class="content-wrapper">
+
+            <%- include('./components/alert') %>
+
+           <div class="container mx-auto mt-1 text-center">
+            <h2 style="display: inline-block; border-bottom: 5px solid #191C24; padding-bottom: 10px; max-width: 200px;">伺服器列表</h2>
+            <p class="text-gray">在此處編輯、刪除、建立和更新伺服器</p>
+           </div>
+
+            <% if (req.query.err) { %>
+              <% if (req.query.err !== "none") { %>
+                <div class="alert" style="background-color: #007fcc; border-radius: 15px;">
+                <% if (req.query.err == "CREATEDSERVER") { %>
+                  成功！您的伺服器已建立
+                <% } %>
+                <% if (req.query.err == "DELETEDSERVER") { %>
+                  成功！您的伺服器已被刪除
+                <% } %>
+                <% if (req.query.err == "MODIFYSERVER") { %>
+                  成功！您的伺服器資源已更改
+                <% } %>
+                </div>
+              <% } %>
+            <% } %>
+            
+            <div class="row">
+              <% if (pterodactyl.relationships.servers.data.length == 0) { %>
+              <% } else { %>
+              <% for (let i = 0, len = pterodactyl.relationships.servers.data.length; i < len; i++) { %>                
+                <div class="col-md-6 grid-margin stretch-card">
+                  <div class="card">
+                    <div class="card-body">
+                      <h4 class="card-title"><%= pterodactyl.relationships.servers.data[i].attributes.name.length > 40 ? pterodactyl.relationships.servers.data[i].attributes.name.slice(0, 40) + "..." : pterodactyl.relationships.servers.data[i].attributes.name %></h4>
+                      <h5 style="font-family: 'Roboto Mono', monospace;">編號 <%= pterodactyl.relationships.servers.data[i].attributes.identifier %></h5><br>
+                      <p><i class="mdi mdi-memory"></i> &nbsp; CPU: <%= pterodactyl.relationships.servers.data[i].attributes.limits.cpu/100 %> Core</p>
+                      <p><i class="mdi mdi-layers"></i> &nbsp; Ram（記憶體）: <%= pterodactyl.relationships.servers.data[i].attributes.limits.memory/1024 %> GB</p>
+                      <p><i class="mdi mdi-harddisk"></i> &nbsp; Disk（儲存空間）: <%= pterodactyl.relationships.servers.data[i].attributes.limits.disk/1024 %> GB</p>
+                      <br>
+
+                      <a role="button" style="border-radius: 15px; display: inline-flex; align-items: center;" class="btn btn-danger btn-lg" onclick="if (confirm('請確認要刪除該伺服器，刪除後資料將無法找回')) { window.location.href='/delete?id=<%= pterodactyl.relationships.servers.data[i].attributes.id %>' }">
+                        <i class="mdi mdi-delete mr-2 d-flex justify-content-center"></i>
+                        <span>刪除伺服器</span> 
+                      </a>             
+
+                      <a role="button" style="border-radius: 15px; display: inline-flex; align-items: center;" class="btn btn-warning btn-lg" href="/servers/edit?id=<%= pterodactyl.relationships.servers.data[i].attributes.id %>">
+                      <i class="mdi mdi-pencil mr-2 d-flex justify-content-center"></i> 編輯資源</a>
+
+                      <% if (settings.renewals.status) { %> 
+                        <a role="button" style="border-radius: 15px; display: inline-flex; align-items: center;" class="btn btn-success btn-lg" href="/renew?id=<%= pterodactyl.relationships.servers.data[i].attributes.id %>">
+                        <i class="mdi mdi-refresh mr-2 d-flex justify-content-center"></i> Renew</a>
+                      <% } %>
+                      
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              <% } %>
+           <% } %>
+           <div class="col-md-6 grid-margin stretch-card">
+            <div class="card">
+              <div class="card-body">
+                <center>
+                  <a class="button2 d-flex justify-content-center" href="../servers/new" onclick="this.classList.toggle('button2--loading')">
+                    <span class="button2__text">+</span>
+                  </a>
+                </center>
+              </div>
+            </div>
+          </div>
+            </div>
+          </div>
+          <!-- content-wrapper ends -->
+          <%- include('./components/footer') %>
+        </div>
+        <!-- main-panel ends -->
+      </div>
+      <!-- page-body-wrapper ends -->
+    </div>
+    <!-- container-scroller -->
+    <%- include('./components/scripts') %>
+  </body>
+</html>
