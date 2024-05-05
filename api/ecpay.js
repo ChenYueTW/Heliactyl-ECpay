@@ -4,66 +4,68 @@ const axios = require('axios');
 const bodyParser = require('body-parser');
 const { default: ShortUniqueId } = require('short-unique-id');
 const moment = require('moment');
+const qs = require('querystring');
+const config = {
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+};
 
 function generateCheckValue(params) {
-    const sortedParams = Object.entries(params).sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
-    const queryString = sortedParams.map(([key, value]) => `${key}=${value}`).join('&');
+    queryString = `ChoosePayment=${params.ChoosePayment}&EncryptType=${params.EncryptType}&ItemName=${params.ItemName}&MerchantID=${params.MerchantID}&MerchantTradeDate=${params.MerchantTradeDate}&MerchantTradeNo=${params.MerchantTradeNo}&PaymentType=${params.PaymentType}&ReturnURL=${params.ReturnURL}&TotalAmount=${params.TotalAmount}&TradeDesc=${params.TradeDesc}`
+    checkValue = `HashKey=${settings.ecpay.hashkey}&${queryString}&HashIV=${settings.ecpay.hashiv}`;
+    console.log(checkValue);
+    checkValue = encodeURIComponent(checkValue).toLowerCase();
+    checkValue = checkValue
+        .replace(/%2d/g, '-')
+        .replace(/%5f/g, '_')
+        .replace(/%2e/g, '.')
+        .replace(/%21/g, '!')
+        .replace(/%2a/g, '*')
+        .replace(/%28/g, '(')
+        .replace(/%29/g, ')')
+        .replace(/%20/g, '+');
+    console.log(checkValue);
 
-    let result =
-      `HashKey=${settings.ecpay.hashkey}&` +
-      `${queryString}` +
-      `&HashIV=${settings.ecpay.hashiv}`;
-    result = encodeURIComponent(result).toLowerCase();
-
-    result = result
-      .replace(/%2d/g, '-')
-      .replace(/%5f/g, '_')
-      .replace(/%2e/g, '.')
-      .replace(/%21/g, '!')
-      .replace(/%2a/g, '*')
-      .replace(/%28/g, '(')
-      .replace(/%29/g, ')')
-      .replace(/%20/g, '+');
-
-    result = crypto.createHash('sha256').update(result).digest('hex').toString();
-    return result.toUpperCase();
+    checkValue = crypto.createHash('sha256').update(checkValue).digest('hex');
+    checkValue = checkValue.toUpperCase();
+    return checkValue;
 }
 
 module.exports.load = async function (app, db) {
     app.use(bodyParser.urlencoded({ extended: false }));
     app.post("/process_payment", async (req, res) => {
         if (!req.session.pterodactyl) return res.redirect("/login");
-        
-        const setting = settings.ecpay;
+
         const uid = new ShortUniqueId({ length: 20 });
         const uuid = uid.rnd();
 
-        let base_param = {
-            MerchantID: setting.merchantId,
+        let data = {
+            MerchantID: settings.ecpay.merchantId,
             MerchantTradeNo: `${uuid}`,
             MerchantTradeDate: moment().format('YYYY/MM/DD HH:mm:ss'),
             PaymentType: 'aio',
-            TotalAmount: req.body.totalPrice,
-            TradeDesc: `MistHost Resources Buy`,
-            ItemName: `MistHost Resources Buy`,
-            ReturnURL: `https://heli.misthost.net/process_payment`,
+            TotalAmount: parseInt(req.body.totalPrice),
+            TradeDesc: 'MistHost Resources Buy',
+            ItemName: 'MistHost Resources Buy',
+            ReturnURL: `https://helia.misthost.net/process_payment`,
             ChoosePayment: 'CVS',
             EncryptType: 1,
         }
+        data.CheckMacValue = generateCheckValue(data);
 
-        base_param.CheckMacValue = generateCheckValue(base_param);
-        console.log(base_param);
+        const requestBody = qs.stringify(data);
+        console.log(data);
 
         try {
-            const response = await axios.post('https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5', base_param);
+            const response = await axios.post('https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5', requestBody, config);
             const result = response.data;
-            console.log(result);
-            // Handle success case, such as storing transaction details in database, updating order status, etc.
-            res.send(`Payment has been initiated.
-Redirect URL: ${result.Url}`);
+
+            console.log(response);
+
+            res.redirect('https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5');
         } catch (error) {
             console.error("Error occurred while processing ECPay payment:", error);
-            // Handle failure case by displaying proper message to the user
             res.status(500).send("Error occurred during payment initiation.");
         }
     });

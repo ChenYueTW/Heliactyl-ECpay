@@ -15,11 +15,11 @@
   },
   "website": {
     "port": 3000,
-    "secret": "aaaaaa"
+    "secret": "Chen_gom86660720"
   },
   "pterodactyl": {
     "domain": "https://panel.misthost.net",
-    "key": "ptla_xxxxxx"
+    "key": "ptla_Vew0NqSU88LtMRM3WI3BhDtutFyz0DSAwdRhFflE1VD"
   },
   "linkvertise": {
     "userid": "50000",
@@ -42,9 +42,9 @@
     "coins": 100
   },
   "ecpay": {
-    "merchantId": "",
-    "hashkey": "",
-    "hashiv": ""
+    "merchantId": "3357332",
+    "hashkey": "vzdFrzxAHlPqM94Q",
+    "hashiv": "ByyLNElF3eFeWB2Y"
   },
   "category": {
     "management": true,
@@ -112,8 +112,8 @@
       },
       "oauth2": {
         "_comment": "Go to https://discord.dev/ and create an application to set these up.",
-        "id": "",
-        "secret": "",
+        "id": "1190958271914315896",
+        "secret": "5e4zWc5K2l3VcxPpo3o0Uo5GRrjhOIMZ",
         "link": "https://helia.misthost.net",
         "callbackpath": "/callback",
         "prompt": true,
