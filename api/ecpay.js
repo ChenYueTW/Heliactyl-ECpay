@@ -1,20 +1,12 @@
 const settings = require('../settings.json');
 const crypto = require('crypto');
-const axios = require('axios');
 const bodyParser = require('body-parser');
 const { default: ShortUniqueId } = require('short-unique-id');
 const moment = require('moment');
-const qs = require('querystring');
-const config = {
-    headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-    }
-};
 
 function generateCheckValue(params) {
     queryString = `ChoosePayment=${params.ChoosePayment}&EncryptType=${params.EncryptType}&ItemName=${params.ItemName}&MerchantID=${params.MerchantID}&MerchantTradeDate=${params.MerchantTradeDate}&MerchantTradeNo=${params.MerchantTradeNo}&PaymentType=${params.PaymentType}&ReturnURL=${params.ReturnURL}&TotalAmount=${params.TotalAmount}&TradeDesc=${params.TradeDesc}`
     checkValue = `HashKey=${settings.ecpay.hashkey}&${queryString}&HashIV=${settings.ecpay.hashiv}`;
-    console.log(checkValue);
     checkValue = encodeURIComponent(checkValue).toLowerCase();
     checkValue = checkValue
         .replace(/%2d/g, '-')
@@ -25,7 +17,6 @@ function generateCheckValue(params) {
         .replace(/%28/g, '(')
         .replace(/%29/g, ')')
         .replace(/%20/g, '+');
-    console.log(checkValue);
 
     checkValue = crypto.createHash('sha256').update(checkValue).digest('hex');
     checkValue = checkValue.toUpperCase();
@@ -37,7 +28,7 @@ module.exports.load = async function (app, db) {
     app.post("/process_payment", async (req, res) => {
         if (!req.session.pterodactyl) return res.redirect("/login");
 
-        const uid = new ShortUniqueId({ length: 20 });
+        const uid = new ShortUniqueId({ length: 15 });
         const uuid = uid.rnd();
 
         let data = {
@@ -48,22 +39,38 @@ module.exports.load = async function (app, db) {
             TotalAmount: parseInt(req.body.totalPrice),
             TradeDesc: 'MistHost Resources Buy',
             ItemName: 'MistHost Resources Buy',
-            ReturnURL: `https://helia.misthost.net/process_payment`,
+            ReturnURL: `https://helia.misthost.net/order/${uuid}`,
             ChoosePayment: 'CVS',
             EncryptType: 1,
         }
         data.CheckMacValue = generateCheckValue(data);
 
-        const requestBody = qs.stringify(data);
-        console.log(data);
+        const htmlForm = `
+        <form id="ecpayForm" method="POST" action="https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5">
+            <input type="hidden" name="MerchantID" value="${data.MerchantID}">
+            <input type="hidden" name="MerchantTradeNo" value="${data.MerchantTradeNo}">
+            <input type="hidden" name="MerchantTradeDate" value="${data.MerchantTradeDate}">
+            <input type="hidden" name="PaymentType" value="${data.PaymentType}">
+            <input type="hidden" name="TotalAmount" value="${data.TotalAmount}">
+            <input type="hidden" name="TradeDesc" value="${data.TradeDesc}">
+            <input type="hidden" name="ItemName" value="${data.ItemName}">
+            <input type="hidden" name="ReturnURL" value="${data.ReturnURL}">
+            <input type="hidden" name="ChoosePayment" value="${data.ChoosePayment}">
+            <input type="hidden" name="EncryptType" value="${data.EncryptType}">
+            <input type="hidden" name="CheckMacValue" value="${data.CheckMacValue}">
+        </form>
+        <div>
+            <h2>訂單詳細信息</h2>
+            <p><strong>訂單金額: </strong> ${data.TotalAmount}</p>
+            <p><strong>訂單編號: </strong> ${data.MerchantTradeNo}</p>
+            <p><strong>日期: </strong> ${data.MerchantTradeDate}</p>
+        </div>
+        <script>document.getElementById("ecpayForm").submit();</script>
+        `;
 
         try {
-            const response = await axios.post('https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5', requestBody, config);
-            const result = response.data;
-
-            console.log(response);
-
-            res.redirect('https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5');
+            // console.log(htmlForm);
+            res.send(htmlForm);
         } catch (error) {
             console.error("Error occurred while processing ECPay payment:", error);
             res.status(500).send("Error occurred during payment initiation.");
