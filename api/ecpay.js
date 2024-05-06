@@ -30,6 +30,10 @@ module.exports.load = async function (app, db) {
 
         const uid = new ShortUniqueId({ length: 15 });
         const uuid = uid.rnd();
+        const cpu = req.body.cpu;
+        const ram = req.body.ram;
+        const disk = req.body.disk;
+        const servers = req.body.servers;
 
         let data = {
             MerchantID: settings.ecpay.merchantId,
@@ -39,7 +43,7 @@ module.exports.load = async function (app, db) {
             TotalAmount: parseInt(req.body.totalPrice),
             TradeDesc: 'MistHost Resources Buy',
             ItemName: 'MistHost Resources Buy',
-            ReturnURL: `https://helia.misthost.net/order/${uuid}`,
+            ReturnURL: `https://helia.misthost.net/order`,
             ChoosePayment: 'CVS',
             EncryptType: 1,
         }
@@ -69,11 +73,48 @@ module.exports.load = async function (app, db) {
         `;
 
         try {
-            // console.log(htmlForm);
+            await db.set(`order-${uuid}`, {
+                cpu: cpu,
+                ram: ram,
+                disk: disk,
+                servers: servers
+            });
             res.send(htmlForm);
         } catch (error) {
-            console.error("Error occurred while processing ECPay payment:", error);
-            res.status(500).send("Error occurred during payment initiation.");
+            console.error("處理 ECPay 付款時發生錯誤: ", error);
+            res.status(500).send("付款期間發生錯誤");
         }
+    });
+    app.post("/order", async (req, res) => {
+        const orderUser = await db.get(`extra-${req.body.id}`)
+        const orderInfo = await db.get(`order-${req.body.MerchantTradeNo}`);
+        let extra = {
+            ram: 0,
+            disk: 0,
+            cpu: 0,
+            servers: 0
+        }
+
+        // 偵測是否有extra-資料 沒有的話創一個
+        if (orderUser == undefined) {
+            await db.set(`extra-${req.body.id}`, extra);
+        }
+        // 把資源加起來
+        const resources = await db.get(`extra-${req.body.id}`);
+        const cpu = orderInfo.cpu * 100 + resources.cpu; // 核心轉%
+        const ram = orderInfo.ram * 1024 + resources.ram; // GB轉MB
+        const disk = orderInfo.disk * 1024 + resources.disk; // GB轉MB
+        const servers = orderInfo.servers + resources.servers;
+        extra = {
+            ram: ram,
+            disk: disk,
+            cpu: cpu,
+            servers: servers
+        }
+        
+        await db.set(`extra-${req.body.id}`, extra);
+
+        console.log(orderInfo);
+        res.send('1|OK');
     });
 };
