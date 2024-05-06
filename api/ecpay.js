@@ -33,7 +33,10 @@ module.exports.load = async function (app, db) {
         const cpu = req.body.cpu;
         const ram = req.body.ram;
         const disk = req.body.disk;
-        const servers = req.body.servers;
+        let servers = req.body.servers;
+        if (!servers) {
+            servers = 0;
+        }
 
         let data = {
             MerchantID: settings.ecpay.merchantId,
@@ -41,8 +44,8 @@ module.exports.load = async function (app, db) {
             MerchantTradeDate: moment().format('YYYY/MM/DD HH:mm:ss'),
             PaymentType: 'aio',
             TotalAmount: parseInt(req.body.totalPrice),
-            TradeDesc: 'MistHost Resources Buy',
-            ItemName: 'MistHost Resources Buy',
+            TradeDesc: `購買資訊： CPU ${cpu} 核、RAM ${ram} GB、DISK ${disk} GB、伺服器數量 ${servers} 個`,
+            ItemName: 'MistHost資源購買',
             ReturnURL: `https://helia.misthost.net/order`,
             ChoosePayment: 'CVS',
             EncryptType: 1,
@@ -77,8 +80,10 @@ module.exports.load = async function (app, db) {
                 cpu: cpu,
                 ram: ram,
                 disk: disk,
-                servers: servers
+                servers: servers,
+                id: req.session.userinfo.id
             });
+
             res.send(htmlForm);
         } catch (error) {
             console.error("處理 ECPay 付款時發生錯誤: ", error);
@@ -86,8 +91,8 @@ module.exports.load = async function (app, db) {
         }
     });
     app.post("/order", async (req, res) => {
-        const orderUser = await db.get(`extra-${req.body.id}`)
-        const orderInfo = await db.get(`order-${req.body.MerchantTradeNo}`);
+        const orderInfo = await db.get(`order-${req.body.MerchantTradeNo}`); // 有cpu、ran、disk、servers、userID
+        const orderUser = await db.get(`extra-${orderInfo.id}`) // 讀取extra-ID資料表
         let extra = {
             ram: 0,
             disk: 0,
@@ -97,24 +102,31 @@ module.exports.load = async function (app, db) {
 
         // 偵測是否有extra-資料 沒有的話創一個
         if (orderUser == undefined) {
-            await db.set(`extra-${req.body.id}`, extra);
+            await db.set(`extra-${orderInfo.id}`, extra);
         }
         // 把資源加起來
-        const resources = await db.get(`extra-${req.body.id}`);
+        const resources = await db.get(`extra-${orderInfo.id}`); // 原本資源
+
+        // 檢測訂單<伺服器數量>是否為空格
+        if (!orderInfo.servers) {
+            orderInfo.servers = 0;
+        }
+        // 檢測原本資源<伺服器數量>是否為null
+        if (!resources.servers) {
+            resources.servers = 0;
+        }
         const cpu = orderInfo.cpu * 100 + resources.cpu; // 核心轉%
         const ram = orderInfo.ram * 1024 + resources.ram; // GB轉MB
         const disk = orderInfo.disk * 1024 + resources.disk; // GB轉MB
-        const servers = orderInfo.servers + resources.servers;
+        const servers = parseInt(orderInfo.servers) + parseInt(resources.servers);
         extra = {
             ram: ram,
             disk: disk,
             cpu: cpu,
             servers: servers
         }
-        
-        await db.set(`extra-${req.body.id}`, extra);
-
-        console.log(orderInfo);
+        await db.set(`extra-${orderInfo.id}`, extra);
         res.send('1|OK');
+        await db.delete(`order-${req.body.MerchantTradeNo}`);
     });
 };
