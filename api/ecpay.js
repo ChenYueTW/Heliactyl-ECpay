@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const bodyParser = require('body-parser');
 const { default: ShortUniqueId } = require('short-unique-id');
 const moment = require('moment');
+const log = require('../misc/log');
 
 function generateCheckValue(params) {
     queryString = `ChoosePayment=${params.ChoosePayment}&EncryptType=${params.EncryptType}&ItemName=${params.ItemName}&MerchantID=${params.MerchantID}&MerchantTradeDate=${params.MerchantTradeDate}&MerchantTradeNo=${params.MerchantTradeNo}&PaymentType=${params.PaymentType}&ReturnURL=${params.ReturnURL}&TotalAmount=${params.TotalAmount}&TradeDesc=${params.TradeDesc}`
@@ -30,13 +31,16 @@ module.exports.load = async function (app, db) {
 
         const uid = new ShortUniqueId({ length: 15 });
         const uuid = uid.rnd();
-        const cpu = req.body.cpu;
-        const ram = req.body.ram;
-        const disk = req.body.disk;
+        let cpu = req.body.cpu;
+        let ram = req.body.ram;
+        let disk = req.body.disk;
         let servers = req.body.servers;
-        if (!servers) {
-            servers = 0;
-        }
+
+        // 判斷是否為空值
+        if (!cpu) cpu = 0;
+        if (!ram) ram = 0;
+        if (!disk) disk = 0;
+        if (!servers) servers = 0;
 
         let data = {
             MerchantID: settings.ecpay.merchantId,
@@ -85,6 +89,7 @@ module.exports.load = async function (app, db) {
             });
 
             res.send(htmlForm);
+            log('訂單創建', `\`${req.session.userinfo.id}\` 創建了訂單\n編號為 \`order-${uuid}\`\n\`\`\`CPU: ${cpu} 核心\nRam: ${ram} GB\nDisk: ${disk} GB\nServers: ${servers} 個\`\`\``);
         } catch (error) {
             console.error("處理 ECPay 付款時發生錯誤: ", error);
             res.status(500).send("付款期間發生錯誤");
@@ -108,13 +113,10 @@ module.exports.load = async function (app, db) {
         const resources = await db.get(`extra-${orderInfo.id}`); // 原本資源
 
         // 檢測訂單<伺服器數量>是否為空格
-        if (!orderInfo.servers) {
-            orderInfo.servers = 0;
-        }
+        if (!orderInfo.servers) orderInfo.servers = 0;
         // 檢測原本資源<伺服器數量>是否為null
-        if (!resources.servers) {
-            resources.servers = 0;
-        }
+        if (!resources.servers) resources.servers = 0;
+        
         const cpu = orderInfo.cpu * 100 + resources.cpu; // 核心轉%
         const ram = orderInfo.ram * 1024 + resources.ram; // GB轉MB
         const disk = orderInfo.disk * 1024 + resources.disk; // GB轉MB
@@ -127,6 +129,7 @@ module.exports.load = async function (app, db) {
         }
         await db.set(`extra-${orderInfo.id}`, extra);
         res.send('1|OK');
+        log('訂單完成', `\`${orderInfo.id}\` 完成了訂單\n編號為 \`order-${orderInfo.id}\`\n\`\`\`CPU: ${orderInfo.cpu} 核心\nRam: ${orderInfo.ram} GB\nDisk: ${orderInfo.disk} GB\nServers: ${orderInfo.servers} 個\`\`\``)
         await db.delete(`order-${req.body.MerchantTradeNo}`);
     });
 };

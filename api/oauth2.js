@@ -299,7 +299,6 @@ nanobar.go(100);
               }
             );
             if (await accountjson.status == 201) {
-              // console.log('staus = 201');
               let accountinfo = JSON.parse(await accountjson.text());
               let userids = await db.get("users") ? await db.get("users") : [];
               userids.push(accountinfo.attributes.id);
@@ -308,7 +307,6 @@ nanobar.go(100);
               req.session.newaccount = true;
               req.session.password = genpassword;
             } else {
-              // console.log('let accListJson');
               let accountlistjson = await fetch(
                 settings.pterodactyl.domain + "/api/application/users?include=servers&filter[email]=" + encodeURIComponent(userinfo.email),
                 {
@@ -321,8 +319,6 @@ nanobar.go(100);
               );
               let accountlist = await accountlistjson.json();
               let user = accountlist.data.filter(acc => acc.attributes.email == userinfo.email);
-              // console.log(accountlist);
-              // console.log(user);
               if (user.length == 1) {
                 let userid = user[0].attributes.id;
                 let userids = await db.get("users") ? await db.get("users") : [];
@@ -338,7 +334,7 @@ nanobar.go(100);
                 return res.send("嘗試建立您的帳戶時發生錯誤");
               };
             };
-            log('新帳號創建！', `${userinfo.username}#${userinfo.discriminator} 首次登入！`)
+            log('新帳號創建', `${userinfo.username}#${userinfo.discriminator} 首次登入！`)
           } else {
             return res.send("新用戶目前無法註冊")
           }
