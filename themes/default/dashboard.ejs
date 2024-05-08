@@ -31,12 +31,12 @@
             <% } if (req.session.newaccount || req.session.password) { %>
             <div style="background-color: #007fcc; border-radius: 15px" class="alert">
                 <% if (req.session.newaccount) { %>
-                    Welcome! You are a first time user<br>
+                    歡迎！<br>
                 <% } %>
                 <% if (req.session.password) { %>
-                    Your password has been changed to <%= req.session.password %>, however if you do not save that then you can just reset it via the "Account Settings" page
+                    密碼已變更為 <%= req.session.password %>, 但是如果不儲存，則可以透過「帳戶設定」頁面重置它
                 <% } else { %>
-                    Please head over to Settings to create a password.
+                    請前往「設定」建立密碼
                 <% } %>
             </div>
         <% } %>
