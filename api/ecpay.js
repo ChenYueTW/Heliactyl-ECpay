@@ -1,100 +1,50 @@
-const settings = require('../settings.json');
-const crypto = require('crypto');
 const bodyParser = require('body-parser');
 const { default: ShortUniqueId } = require('short-unique-id');
-const moment = require('moment');
 const log = require('../misc/log');
-
-function generateCheckValue(params) {
-    queryString = `ChoosePayment=${params.ChoosePayment}&EncryptType=${params.EncryptType}&ItemName=${params.ItemName}&MerchantID=${params.MerchantID}&MerchantTradeDate=${params.MerchantTradeDate}&MerchantTradeNo=${params.MerchantTradeNo}&PaymentType=${params.PaymentType}&ReturnURL=${params.ReturnURL}&TotalAmount=${params.TotalAmount}&TradeDesc=${params.TradeDesc}`
-    checkValue = `HashKey=${settings.ecpay.hashkey}&${queryString}&HashIV=${settings.ecpay.hashiv}`;
-    checkValue = encodeURIComponent(checkValue).toLowerCase();
-    checkValue = checkValue
-        .replace(/%2d/g, '-')
-        .replace(/%5f/g, '_')
-        .replace(/%2e/g, '.')
-        .replace(/%21/g, '!')
-        .replace(/%2a/g, '*')
-        .replace(/%28/g, '(')
-        .replace(/%29/g, ')')
-        .replace(/%20/g, '+');
-
-    checkValue = crypto.createHash('sha256').update(checkValue).digest('hex');
-    checkValue = checkValue.toUpperCase();
-    return checkValue;
-}
+const cvs = require('../ecpay_payment/cvs');
+let userId;
+let resources;
 
 module.exports.load = async function (app, db) {
     app.use(bodyParser.urlencoded({ extended: false }));
     app.post("/process_payment", async (req, res) => {
         if (!req.session.pterodactyl) return res.redirect("/login");
 
+        // 生成訂單編號 隨機15碼
         const uid = new ShortUniqueId({ length: 15 });
         const uuid = uid.rnd();
-        let cpu = req.body.cpu;
-        let ram = req.body.ram;
-        let disk = req.body.disk;
-        let servers = req.body.servers;
 
-        // 判斷是否為空值
-        if (!cpu) cpu = 0;
-        if (!ram) ram = 0;
-        if (!disk) disk = 0;
-        if (!servers) servers = 0;
+        // 處裡訂單
+        const data = cvs.generateOrderDetails(req, uuid);
+        const htmlForm = cvs.ecpayForm(data);
 
-        let data = {
-            MerchantID: settings.ecpay.merchantId,
-            MerchantTradeNo: `${uuid}`,
-            MerchantTradeDate: moment().format('YYYY/MM/DD HH:mm:ss'),
-            PaymentType: 'aio',
-            TotalAmount: parseInt(req.body.totalPrice),
-            TradeDesc: `購買資訊： CPU ${cpu} 核、RAM ${ram} GB、DISK ${disk} GB、伺服器數量 ${servers} 個`,
-            ItemName: 'MistHost資源購買',
-            ReturnURL: `https://helia.misthost.net/order`,
-            ChoosePayment: 'CVS',
-            EncryptType: 1,
-        }
-        data.CheckMacValue = generateCheckValue(data);
+        // 購買的資源
+        resources = cvs.getResource(req);
 
-        const htmlForm = `
-        <form id="ecpayForm" method="POST" action="https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5">
-            <input type="hidden" name="MerchantID" value="${data.MerchantID}">
-            <input type="hidden" name="MerchantTradeNo" value="${data.MerchantTradeNo}">
-            <input type="hidden" name="MerchantTradeDate" value="${data.MerchantTradeDate}">
-            <input type="hidden" name="PaymentType" value="${data.PaymentType}">
-            <input type="hidden" name="TotalAmount" value="${data.TotalAmount}">
-            <input type="hidden" name="TradeDesc" value="${data.TradeDesc}">
-            <input type="hidden" name="ItemName" value="${data.ItemName}">
-            <input type="hidden" name="ReturnURL" value="${data.ReturnURL}">
-            <input type="hidden" name="ChoosePayment" value="${data.ChoosePayment}">
-            <input type="hidden" name="EncryptType" value="${data.EncryptType}">
-            <input type="hidden" name="CheckMacValue" value="${data.CheckMacValue}">
-        </form>
-        <div>
-            <h2>訂單詳細信息</h2>
-            <p><strong>訂單金額: </strong> ${data.TotalAmount}</p>
-            <p><strong>訂單編號: </strong> ${data.MerchantTradeNo}</p>
-            <p><strong>日期: </strong> ${data.MerchantTradeDate}</p>
-        </div>
-        <script>document.getElementById("ecpayForm").submit();</script>
-        `;
+        // 取得使用者Discord ID
+        userId = req.session.userinfo.id;
 
         try {
-            await db.set(`order-${uuid}`, {
-                cpu: cpu,
-                ram: ram,
-                disk: disk,
-                servers: servers,
-                id: req.session.userinfo.id
-            });
-
             res.send(htmlForm);
-            log('訂單創建', `\`${req.session.userinfo.id}\` 創建了訂單\n編號為 \`order-${uuid}\`\n\`\`\`CPU: ${cpu} 核心\nRam: ${ram} GB\nDisk: ${disk} GB\nServers: ${servers} 個\`\`\``);
         } catch (error) {
             console.error("處理 ECPay 付款時發生錯誤: ", error);
             res.status(500).send("付款期間發生錯誤");
         }
     });
+    app.post("/generateCode", async (req, res) => {
+        const uuid = req.body.MerchantTradeNo;
+
+        if (!await db.get(`order-${uuid}`)) {
+            await db.set(`order-${uuid}`, {
+                cpu: resources.cpu,
+                ram: resources.ram,
+                disk: resources.disk,
+                servers: resources.servers,
+                id: userId
+            });
+        }
+        log('訂單創建', `\`${userId}\` 創建了訂單\n編號為 \`order-${uuid}\`\n\`\`\`CPU: ${resources.cpu} 核心\nRam: ${resources.ram} GB\nDisk: ${resources.disk} GB\nServers: ${resources.servers} 個\`\`\``);
+    })
     app.post("/order", async (req, res) => {
         const orderInfo = await db.get(`order-${req.body.MerchantTradeNo}`); // 有cpu、ran、disk、servers、userID
         const orderUser = await db.get(`extra-${orderInfo.id}`) // 讀取extra-ID資料表
@@ -106,9 +56,8 @@ module.exports.load = async function (app, db) {
         }
 
         // 偵測是否有extra-資料 沒有的話創一個
-        if (orderUser == undefined) {
-            await db.set(`extra-${orderInfo.id}`, extra);
-        }
+        if (orderUser) await db.set(`extra-${orderInfo.id}`, extra);
+        
         // 把資源加起來
         const resources = await db.get(`extra-${orderInfo.id}`); // 原本資源
 
@@ -116,7 +65,7 @@ module.exports.load = async function (app, db) {
         if (!orderInfo.servers) orderInfo.servers = 0;
         // 檢測原本資源<伺服器數量>是否為null
         if (!resources.servers) resources.servers = 0;
-        
+
         const cpu = orderInfo.cpu * 100 + resources.cpu; // 核心轉%
         const ram = orderInfo.ram * 1024 + resources.ram; // GB轉MB
         const disk = orderInfo.disk * 1024 + resources.disk; // GB轉MB
@@ -129,7 +78,8 @@ module.exports.load = async function (app, db) {
         }
         await db.set(`extra-${orderInfo.id}`, extra);
         res.send('1|OK');
-        log('訂單完成', `\`${orderInfo.id}\` 完成了訂單\n編號為 \`order-${orderInfo.id}\`\n\`\`\`CPU: ${orderInfo.cpu} 核心\nRam: ${orderInfo.ram} GB\nDisk: ${orderInfo.disk} GB\nServers: ${orderInfo.servers} 個\`\`\``)
+        log('訂單完成', `\`${orderInfo.id}\` 完成了訂單\n編號為 \`order-${req.body.MerchantTradeNo}\`\n\`\`\`CPU: ${orderInfo.cpu} 核心\nRam: ${orderInfo.ram} GB\nDisk: ${orderInfo.disk} GB\nServers: ${orderInfo.servers} 個\`\`\``);
         await db.delete(`order-${req.body.MerchantTradeNo}`);
     });
+    
 };

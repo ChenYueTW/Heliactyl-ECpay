@@ -359,7 +359,7 @@ module.exports.load = async function (app, db) {
 				if (customredirect) return res.redirect(customredirect);
 				return res.redirect(theme.settings.redirect.callback ? theme.settings.redirect.callback : "/");
 			};
-			res.send("Not verified a Discord account. Please verify the email on your Discord account.");
+			res.send("未驗證 Discord 帳戶。請驗證您的 Discord 帳戶上的電子郵件");
 		} else {
 			res.redirect(`/login`);
 		};
