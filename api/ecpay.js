@@ -2,6 +2,7 @@ const bodyParser = require('body-parser');
 const { default: ShortUniqueId } = require('short-unique-id');
 const log = require('../misc/log');
 const cvs = require('../ecpay_payment/cvs');
+const timeoutInfo = require('../misc/timeoutInfo')
 let userId;
 let resources;
 
@@ -31,7 +32,7 @@ module.exports.load = async function (app, db) {
             res.status(500).send("付款期間發生錯誤");
         }
     });
-    app.post("/generateCode", async (req, res) => {
+    app.post("/generate_code", async (req, res) => {
         const uuid = req.body.MerchantTradeNo;
 
         if (!await db.get(`order-${uuid}`)) {
@@ -43,7 +44,7 @@ module.exports.load = async function (app, db) {
                 id: userId
             });
         }
-        log('訂單創建', `\`${userId}\` 創建了訂單\n編號為 \`order-${uuid}\`\n\`\`\`CPU: ${resources.cpu} 核心\nRam: ${resources.ram} GB\nDisk: ${resources.disk} GB\nServers: ${resources.servers} 個\`\`\``);
+        if (resources) log('訂單創建', `\`${userId}\` 創建了訂單\n編號為 \`order-${uuid}\`\n\`\`\`CPU: ${resources.cpu} 核心\nRam: ${resources.ram} GB\nDisk: ${resources.disk} GB\nServers: ${resources.servers} 個\`\`\``);
     })
     app.post("/order", async (req, res) => {
         const orderInfo = await db.get(`order-${req.body.MerchantTradeNo}`); // 有cpu、ran、disk、servers、userID
@@ -56,8 +57,8 @@ module.exports.load = async function (app, db) {
         }
 
         // 偵測是否有extra-資料 沒有的話創一個
-        if (orderUser) await db.set(`extra-${orderInfo.id}`, extra);
-        
+        if (!orderUser) await db.set(`extra-${orderInfo.id}`, extra);
+
         // 把資源加起來
         const resources = await db.get(`extra-${orderInfo.id}`); // 原本資源
 
@@ -77,9 +78,10 @@ module.exports.load = async function (app, db) {
             servers: servers
         }
         await db.set(`extra-${orderInfo.id}`, extra);
-        res.send('1|OK');
         log('訂單完成', `\`${orderInfo.id}\` 完成了訂單\n編號為 \`order-${req.body.MerchantTradeNo}\`\n\`\`\`CPU: ${orderInfo.cpu} 核心\nRam: ${orderInfo.ram} GB\nDisk: ${orderInfo.disk} GB\nServers: ${orderInfo.servers} 個\`\`\``);
         await db.delete(`order-${req.body.MerchantTradeNo}`);
+        res.send('1|OK');
+        timeoutInfo.orderCompleted(req.body.MerchantTradeNo, extra, orderInfo.id, req.body.PaymentDate);
     });
     
 };

@@ -4,7 +4,7 @@ const crypto = require('crypto');
 
 // 生成 CheckValue
 function generateCheckValue(params) {
-    queryString = `ChoosePayment=${params.ChoosePayment}&CustomField1=${params.CustomField1}&CustomField2=${params.CustomField2}&EncryptType=${params.EncryptType}&ItemName=${params.ItemName}&MerchantID=${params.MerchantID}&MerchantTradeDate=${params.MerchantTradeDate}&MerchantTradeNo=${params.MerchantTradeNo}&PaymentInfoURL=${params.PaymentInfoURL}&PaymentType=${params.PaymentType}&ReturnURL=${params.ReturnURL}&StoreExpireDate=${params.StoreExpireDate}&TotalAmount=${params.TotalAmount}&TradeDesc=${params.TradeDesc}`
+    queryString = `ChoosePayment=${params.ChoosePayment}&EncryptType=${params.EncryptType}&ItemName=${params.ItemName}&MerchantID=${params.MerchantID}&MerchantTradeDate=${params.MerchantTradeDate}&MerchantTradeNo=${params.MerchantTradeNo}&PaymentInfoURL=${params.PaymentInfoURL}&PaymentType=${params.PaymentType}&ReturnURL=${params.ReturnURL}&StoreExpireDate=${params.StoreExpireDate}&TotalAmount=${params.TotalAmount}&TradeDesc=${params.TradeDesc}`
     checkValue = `HashKey=${settings.ecpay.hashkey}&${queryString}&HashIV=${settings.ecpay.hashiv}`;
     checkValue = encodeURIComponent(checkValue).toLowerCase();
     checkValue = checkValue
@@ -41,9 +41,7 @@ function generateOrderDetails(req, uuid) {
         ChoosePayment: 'CVS',
         EncryptType: 1,
         StoreExpireDate: 4320,
-        PaymentInfoURL: 'https://helia.misthost.net/generateCode',
-        CustomField1: req.session.userinfo.id,
-        CustomField2: getResource(req)
+        PaymentInfoURL: 'https://helia.misthost.net/generate_code',
     }
     data.CheckMacValue = generateCheckValue(data);
     return data;
@@ -65,8 +63,6 @@ function ecpayForm(data) {
             <input type="hidden" name="EncryptType" value="${data.EncryptType}">
             <input type="hidden" name="StoreExpireDate" value="${data.StoreExpireDate}">
             <input type="hidden" name="PaymentInfoURL" value="${data.PaymentInfoURL}">
-            <input type="hidden" name="CustomField1" value="${data.CustomField1}">
-            <input type="hidden" name="CustomField2" value="${data.CustomField2}">
             <input type="hidden" name="CheckMacValue" value="${data.CheckMacValue}">
         </form>
         <div>
