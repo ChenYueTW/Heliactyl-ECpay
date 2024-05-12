@@ -3,4 +3,5 @@ node_modules/
 database.sqlite
 settings.json
 package-lock.json
+timeout.json
 commit

@@ -38,7 +38,8 @@ function orderCompleted(orderId, orderInfo, userId, timeout) {
     const timeoutData = {
         orderInfo: orderInfo,
         userId: userId,
-        timeout: futureTime
+        timeout: futureTime,
+        isRemind: false
     };
     writeToJson(orderId, timeoutData);
 }
@@ -88,8 +89,8 @@ function setCheckTimer(data) {
             } else {
                 // 如果還未超時，則將時間差減少 1 秒
                 diffPositive -= 1000;
-                console.log(diffPositive);
             }
+
         },
         // 開始定時器
         start: true
@@ -111,5 +112,6 @@ function removeFromJson(orderId) {
 module.exports = {
     checkJsonExistence,
     initTimers,
-    orderCompleted
+    orderCompleted,
+    readJson
 }
