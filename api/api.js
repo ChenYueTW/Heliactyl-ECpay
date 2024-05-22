@@ -10,7 +10,7 @@ const myCache = new NodeCache({
 	stdTTL: 59
 });
 
-module.exports.load = async function (app, db) {
+module.exports.load = async function (app, db, timeoutDB) {
 	/**
 	* Information 
 	* A lot of the API information is taken from Heliactyl v14.
@@ -102,6 +102,7 @@ module.exports.load = async function (app, db) {
 	app.get("/api/getTimeoutJson", async (req, res) =>{
 		let auth = await check(req, res);
 		if (!auth) return;
+		const timeoutDB = timeoutInfo.readDB(timeoutDB);
 
 		const timeoutJson = timeoutInfo.readJson();
 		res.send({
@@ -114,13 +115,9 @@ module.exports.load = async function (app, db) {
 
 	app.post("/api/isRemindJson", async (req, res) => {
 		let auth = await check(req, res);
-		console.log(req.headers);
 		if (!auth) return;
-		console.log('c');
 		if (!req.query.orderId) return res.send({ status: "missing orderId" });
 		
-		console.log(req.query);
-
 		const orderId = req.query.orderId;
 		let timeoutJson = timeoutInfo.readJson();
 		timeoutJson[orderId].isRemind = true;

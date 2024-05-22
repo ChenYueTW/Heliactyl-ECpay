@@ -5,3 +5,4 @@ settings.json
 package-lock.json
 timeout.json
 commit
+timeoutDB.sqlite

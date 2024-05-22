@@ -63,20 +63,36 @@ module.exports.renderdataeval = async function (req) {
 		pterodactyl: req.session.pterodactyl,
 		theme: theme.name,
 		extra: theme.settings.variables,
-		db: db
+		db: db,
+		timeoutDB: timeoutDB
 	};
 };
 
 // Load database
 
 const Keyv = require("keyv");
+const SQLite3 = require('sqlite3');
 const db = new Keyv(settings.database);
+const timeoutDB = new SQLite3.Database('timeoutDB.sqlite', SQLite3.OPEN_READWRITE | SQLite3.OPEN_CREATE, (err) => {
+	if (err) console.error(err.message);
+	console.log('Connected to the timeoutDB database.');
+});
 
 db.on('error', err => {
 	console.log(chalk.red("[Heliactyl] An error has occured when attempting to access the database."))
 });
 
+timeoutDB.on('error', err => {
+	console.log(chalk.red("[Heliactyl] An error has occured when attempting to access the database."))
+});
+
+timeoutDB.run(`CREATE TABLE IF NOT EXISTS key_value (
+	key TEXT UNIQUE,
+	value TEXT
+  )`);
+
 module.exports.db = db;
+module.exports.timeoutDB = timeoutDB;
 
 // Load express addons.
 
@@ -170,7 +186,7 @@ let apifiles = fs.readdirSync('./api').filter(file => file.endsWith('.js'));
 
 apifiles.forEach(file => {
 	let apifile = require(`./api/${file}`);
-	apifile.load(app, db);
+	apifile.load(app, db, timeoutDB);
 });
 
 // Load Interval

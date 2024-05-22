@@ -1,104 +1,113 @@
 const settings = require("../settings.json");
-const { CronJob } = require("cron");
+const timeoutInfo = require('../misc/timeoutInfo');
+const { CronJob, timeout } = require("cron");
 const getAllServers = require("../misc/getAllServers");
 const fetch = require("node-fetch");
 const chalk = require("chalk");
 
 if (settings.pterodactyl && settings.pterodactyl.domain && settings.pterodactyl.domain.endsWith("/")) {
-  settings.pterodactyl.domain = settings.pterodactyl.domain.slice(0, -1);
+	settings.pterodactyl.domain = settings.pterodactyl.domain.slice(0, -1);
 }
 
-module.exports.load = async function (app, db) {
-  // Renewal system is...
-  app.get(`/api/renewalstatus`, async (req, res) => {
-    if (!settings.renewals.status) return res.json({ error: true });
-    if (!req.query.id) return res.json({ error: true });
-    if (!req.session.pterodactyl) return res.json({ error: true });
-    const server = req.session.pterodactyl.relationships.servers.data.filter((server) => server.attributes.id === req.query.id)[0];
-    if (!server) return res.json({ error: true });
+module.exports.load = async function (app, db, timeoutDB) {
+	app.get('/api/getOrderAmount', async (req, res) => {
+		const orderId = req.query.orderId;
+		const totalPrice = timeoutInfo.getOrderTotal(orderId);
+		console.log(timeoutInfo.readDB(timeoutDB));
 
-    const lastRenewal = await db.get(`lastrenewal-${req.query.id}`);
-    if (!lastRenewal) return res.json({ text: 'Disabled' });
+		// 發送訂單金額 json 給前端
+		res.json({ totalPrice: totalPrice });
+	});
+	// Renewal system is...
+	app.get(`/api/renewalstatus`, async (req, res) => {
+		if (!settings.renewals.status) return res.json({ error: true });
+		if (!req.query.id) return res.json({ error: true });
+		if (!req.session.pterodactyl) return res.json({ error: true });
+		const server = req.session.pterodactyl.relationships.servers.data.filter((server) => server.attributes.id === req.query.id)[0];
+		if (!server) return res.json({ error: true });
 
-    if (lastRenewal > Date.now()) return res.json({ text: 'Renewed', success: true });
-    else {
-      const delay = settings.renewals.delay * 86400000;
-      if (Date.now() - lastRenewal > delay) {
-        return res.json({ text: 'Last chance to renew!', renewable: true });
-      }
-      const time = msToDaysAndHours(delay - (Date.now() - lastRenewal));
-      return res.json({ text: time, renewable: true });
-    }
-  });
+		const lastRenewal = await db.get(`lastrenewal-${req.query.id}`);
+		if (!lastRenewal) return res.json({ text: 'Disabled' });
 
-  app.get(`/renew`, async (req, res) => {
-    if (!settings.renewals.status) return res.send(`Renewals are currently disabled.`);
-    if (!req.query.id) return res.send(`Missing ID.`);
-    if (!req.session.pterodactyl) return res.redirect(`/login`);
-    const server = req.session.pterodactyl.relationships.servers.data.filter((server) => server.attributes.id === req.query.id)[0];
-    if (!server) return res.send(`No server with that ID was found!`);
+		if (lastRenewal > Date.now()) return res.json({ text: 'Renewed', success: true });
+		else {
+			const delay = settings.renewals.delay * 86400000;
+			if (Date.now() - lastRenewal > delay) {
+				return res.json({ text: 'Last chance to renew!', renewable: true });
+			}
+			const time = msToDaysAndHours(delay - (Date.now() - lastRenewal));
+			return res.json({ text: time, renewable: true });
+		}
+	});
 
-    const lastRenewal = await db.get(`lastrenewal-${req.query.id}`);
-    if (!lastRenewal) return res.send('No renewals are recorded for this ID.');
+	app.get(`/renew`, async (req, res) => {
+		if (!settings.renewals.status) return res.send(`Renewals are currently disabled.`);
+		if (!req.query.id) return res.send(`Missing ID.`);
+		if (!req.session.pterodactyl) return res.redirect(`/login`);
+		const server = req.session.pterodactyl.relationships.servers.data.filter((server) => server.attributes.id == req.query.id)[0];
+		if (!server) return res.send(`未找到具有該 ID 的伺服器!`);
 
-    if (lastRenewal > Date.now()) return res.redirect(`/dashboard`);
+		const lastRenewal = await db.get(`lastrenewal-${req.query.id}`);
+		if (!lastRenewal) return res.send('No renewals are recorded for this ID.');
 
-    let coins = await db.get("coins-" + req.session.userinfo.id);
-    coins = coins? coins : 0;
+		if (lastRenewal > Date.now()) return res.redirect(`/dashboard`);
 
-    if (settings.renewals.cost > coins) return res.redirect(`/dashboard` + "?err=CANNOTAFFORDRENEWAL");
+		let coins = await db.get("coins-" + req.session.userinfo.id);
+		coins = coins ? coins : 0;
 
-    await db.set("coins-" + req.session.userinfo.id, coins - settings.renewals.cost);
+		if (settings.renewals.cost > coins) return res.redirect(`/dashboard` + "?err=CANNOTAFFORDRENEWAL");
 
-    const newTime = lastRenewal + settings.renewals.delay * 86400000;
-    await db.set(`lastrenewal-${req.query.id}`, newTime);
+		await db.set("coins-" + req.session.userinfo.id, coins - settings.renewals.cost);
 
-    return res.redirect(`/dashboard` + `?success=RENEWED`);
-  });
+		const newTime = lastRenewal + settings.renewals.delay * 86400000;
+		await db.set(`lastrenewal-${req.query.id}`, newTime);
 
-  new CronJob(`0 0 * * *`, async () => {
-    if (settings.renewals.status) {
-      console.log(chalk.cyan("[heliactyl]") + chalk.white(" Checking renewal servers... "));
-      const servers = await getAllServers();
-      for (const server of servers) {
-        const id = server.attributes.id;
-        const lastRenewal = await db.get(`lastrenewal-${id}`);
-        if (!lastRenewal) continue;
+		return res.redirect(`/dashboard` + `?success=RENEWED`);
+	});
 
-        if (lastRenewal > Date.now()) continue;
-        if (Date.now() - lastRenewal > settings.renewals.delay * 86400000) {
-          // Server hasn't paid for renewal and gets suspended
-          let reponse = await fetch(
-            settings.pterodactyl.domain + "/api/application/servers/" + id + "/suspend",
-            {
-              method: "post",
-              headers: {
-                'Content-Type': 'application/json',
-                "Authorization": `Bearer ${settings.pterodactyl.key}`
-              }
-            }
-          );
-          let ok = await reponse.ok;
-          if (ok!== true) continue;
-          console.log(`Server with ID ${id} failed renewal and was deleted.`);
-          await db.delete(`lastrenewal-${id}`);
-        }
-      }
-      console.log(chalk.cyan("[Heliactyl]") + chalk.white("The renewal check-over is now complete."));
-    }
-  }, null, true, settings.timezone)
-   .start()
+	new CronJob(`0 0 * * *`, async () => {
+		if (settings.renewals.status) {
+			console.log(chalk.cyan("[heliactyl]") + chalk.white(" Checking renewal servers... "));
+			const servers = await getAllServers();
+			for (const server of servers) {
+				const id = server.attributes.id;
+				const lastRenewal = await db.get(`lastrenewal-${id}`);
+				if (!lastRenewal) continue;
+
+				if (lastRenewal > Date.now()) continue;
+				if (Date.now() - lastRenewal > settings.renewals.delay * 86400000) {
+					// Server hasn't paid for renewal and gets suspended
+					let reponse = await fetch(
+						settings.pterodactyl.domain + "/api/application/servers/" + id + "/suspend",
+						{
+							method: "post",
+							headers: {
+								'Content-Type': 'application/json',
+								"Authorization": `Bearer ${settings.pterodactyl.key}`
+							}
+						}
+					);
+					let ok = await reponse.ok;
+					if (ok !== true) continue;
+					console.log(`Server with ID ${id} failed renewal and was deleted.`);
+					await db.delete(`lastrenewal-${id}`);
+				}
+			}
+			console.log(chalk.cyan("[Heliactyl]") + chalk.white("The renewal check-over is now complete."));
+		}
+	}, null, true, settings.timezone)
+		.start()
 };
 
 function msToDaysAndHours(ms) {
-  const msInDay = 86400000;
-  const msInHour = 3600000;
+	const msInDay = 86400000;
+	const msInHour = 3600000;
 
-  const days = Math.floor(ms / msInDay);
-  const hours = Math.round((ms - days * msInDay) / msInHour * 100) / 100;
+	const days = Math.floor(ms / msInDay);
+	const hours = Math.round((ms - days * msInDay) / msInHour * 100) / 100;
 
-  const pluralDays = days === 1 ? "" : "s";
-  const pluralHours = hours === 1 ? "" : "s";
+	const pluralDays = days === 1 ? "" : "s";
+	const pluralHours = hours === 1 ? "" : "s";
 
-  return `${days} day${pluralDays} and ${hours} hour${pluralHours}`;
+	return `${days} day${pluralDays} and ${hours} hour${pluralHours}`;
 }

@@ -10,6 +10,38 @@ function checkJsonExistence() {
     }
 }
 
+// 獲得 db 內所有資料
+function readDB(timeoutDB) {
+    if (fs.existsSync('timeoutDB.sqlite')) {
+        let result;
+        timeoutDB.all(`SELECT * FROM key_value`, [], (err, rows) => {
+            if (err) throw err;
+            let result = {};
+            rows.forEach(row => {
+              result[row.key] = JSON.parse(row.value);
+            });
+            console.log(rows);       
+        });
+
+        return result;
+    } else {
+        return {};
+    }
+}
+
+function writeToDB(orderId, data) {
+    let insert = db.prepare(`INSERT OR REPLACE INTO key_value (key, value) VALUES (?, ?)`);
+    insert.run(orderId, JSON.stringify({
+        data
+    }));
+    insert.finalize();
+}
+
+function getToDB(orderId) {
+    let insert = db.prepare(`INSERT OR REPLACE INTO key_value (key, value) VALUES (?, ?)`);
+    insert.run()
+}
+
 // 讀取 timeout.json 的函數
 function readJson() {
     if (fs.existsSync('timeout.json')) {
@@ -43,7 +75,6 @@ function orderCompleted(orderId, orderInfo, userId, timeout) {
     };
     writeToJson(orderId, timeoutData);
 }
-
 
 // 寫入 timeout.json 的函數
 function writeToJson(orderId, data) {
@@ -109,9 +140,29 @@ function removeFromJson(orderId) {
     fs.writeFileSync('timeout.json', JSON.stringify(timeoutJson, null, 2));
 }
 
+function getOrderTotal(orderId) {
+    let totalPrice;
+    // console.log(orderId);
+    try {
+        const orderInfoJson = readJson()[orderId].orderInfo;
+        const cpu = orderInfoJson.cpu * (50 / 100);
+        const ram = orderInfoJson.ram * (20 / 1024);
+        const disk = orderInfoJson.disk * (10 / 1024);
+        const servers = orderInfoJson.servers * 30;
+        totalPrice = cpu + ram + disk + servers;
+    } catch (error) {
+        totalPrice = 0
+    }
+
+    return totalPrice;
+}
+
 module.exports = {
     checkJsonExistence,
     initTimers,
     orderCompleted,
-    readJson
+    readJson,
+    getOrderTotal,
+    readDB,
+    writeToDB
 }

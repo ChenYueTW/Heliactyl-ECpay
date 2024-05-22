@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('./components/head') %>
+
+	<body>
+		<div class="container-scroller">
+			<!-- partial:partials/_sidebar.html -->
+			<%- include('./components/sidebar') %>
+				<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.4.0/clipboard.min.js"
+					integrity="sha512-iJh0F10blr9SC3d0Ow1ZKHi9kt12NYa+ISlmCdlCdNZzFwjH1JppRTeAnypvUez01HroZhAmP4ro4AvZ/rG0UQ=="
+					crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+				<script>
+					// 获取订单金额的函数
+					function getOrderAmount() {
+						var orderId = document.getElementById('INPUTORDERID').value || 0;
+						var totalPriceInput = document.getElementById('orderAmount');
+						console.log(orderId);
+
+						var xhr = new XMLHttpRequest();
+						xhr.open('GET', '/api/getOrderAmount?orderId=' + orderId, true);
+						xhr.onreadystatechange = function () {
+							if (xhr.readyState === 4 && xhr.status === 200) {
+								// console.log(xhr.responseText);
+								var totalPrice = JSON.parse(xhr.responseText).totalPrice;
+								// 更新顯示金額
+								totalPriceInput.value = totalPrice;
+							}
+						};
+						xhr.send();
+					}
+				</script>
+				<!-- partial -->
+				<div class="container-fluid page-body-wrapper">
+					<!-- partial:partials/_navbar.html -->
+					<%- include('./components/topnav') %>
+						<!-- partial -->
+						<div class="main-panel">
+							<div style="background-color: #111319" class="content-wrapper">
+
+								<div class="container mx-auto mt-1 text-center">
+									<h2
+										style="display: inline-block; border-bottom: 5px solid #191C24; padding-bottom: 10px; max-width: 300px; height: 50px; line-height: 1.5;">
+										續約資源</h2>
+									<p class="text-gray">訂單續約資源</p>
+								</div>
+
+								<div class="row justify-content-center">
+									<div class="col-md-6 grid-margin stretch-card">
+										<div class="card">
+											<div class="card-body">
+												<form class="forms-sample">
+
+													<div class="form-group">
+														<label>要續約的訂單編號（務必正確）</label>
+														<input style="border-radius: 15px;" type="text"
+															id="INPUTORDERID" class="form-control"
+															placeholder="訂單編號（數字英文混合16碼）"
+															onchange="getOrderAmount()">
+													</div>
+
+													<div class="form-group">
+														<label>訂單金額</label>
+														<input style="border-radius: 15px;" type="number"
+															id="orderAmount" class="form-control" placeholder="訂單金額"
+															disabled>
+													</div>
+
+													<a role="button" class="btn btn-primary btn-lg"
+														href="/regen">重設帳號密碼</a>
+													<a role="button" class="btn btn-primary btn-lg"
+														href="/updateinfo">重新整理帳號資料</a>
+												</form>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<script>
+								var clipboard = new Clipboard('.btn-clipboard');
+							</script>
+							<!-- content-wrapper ends -->
+							<%- include('./components/footer') %>
+						</div>
+						<!-- main-panel ends -->
+				</div>
+				<!-- page-body-wrapper ends -->
+		</div>
+		<!-- container-scroller -->
+		<!-- plugins:js -->
+		<!-- endinject -->
+		<!-- Plugin js for this page -->
+		<script src="/assets/vendors/select2/select2.min.js"></script>
+		<script src="/assets/vendors/typeahead.js/typeahead.bundle.min.js"></script>
+		<!-- End plugin js for this page -->
+		<!-- inject:js -->
+		<%- include('./components/scripts') %>
+			<!-- endinject -->
+			<!-- Custom js for this page -->
+			<script src="/assets/js/file-upload.js"></script>
+			<script src="/assets/js/typeahead.js"></script>
+			<script src="/assets/js/select2.js"></script>
+			<!-- End custom js for this page -->
+			<style>
+				.alertbtn {
+					margin-left: 15px;
+					color: white;
+					font-weight: bold;
+					float: right;
+					font-size: 22px;
+					line-height: 20px;
+					cursor: pointer;
+					transition: 0.3s;
+				}
+			</style>
+	</body>
+</html>

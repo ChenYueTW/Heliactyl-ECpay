@@ -7,6 +7,7 @@ const log = require("../misc/log.js");
 
 const fetch = require("node-fetch");
 const fs = require("fs");
+const formateDateTime = require("../misc/formateDateTime.js");
 
 
 if (settings.pterodactyl && settings.pterodactyl.domain && settings.pterodactyl.domain.endsWith("/")) {
@@ -209,8 +210,7 @@ module.exports.load = async function (app, db) {
               await db.set("coins-" + req.session.userinfo.id, coins - cost)
             }
             
-            await db.set(`lastrenewal-${serverinfotext.attributes.id}`, Date.now())
-            await db.set(`createdserver-${req.session.userinfo.id}`, true)
+            await db.set(`createdserver-${req.session.userinfo.id}`, true);
 
             cb()
             log('created server', `${req.session.userinfo.username}#${req.session.userinfo.discriminator} created a new server named \`${name}\` with the following specs:\n\`\`\`Memory: ${ram} MB\nCPU: ${cpu}%\nDisk: ${disk}\nLocation ID: ${location}\nEgg: ${egg}\`\`\``)

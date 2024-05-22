@@ -1,110 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
-  <%- include('./components/head') %>
+<%- include('./components/head') %>
+
   <body>
     <div class="container-scroller">
       <!-- partial:partials/_sidebar.html -->
       <%- include('./components/sidebar') %>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.4.0/clipboard.min.js" integrity="sha512-iJh0F10blr9SC3d0Ow1ZKHi9kt12NYa+ISlmCdlCdNZzFwjH1JppRTeAnypvUez01HroZhAmP4ro4AvZ/rG0UQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-      <!-- partial -->
-      <div class="container-fluid page-body-wrapper">
-        <!-- partial:partials/_navbar.html -->
-        <%- include('./components/topnav') %>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.4.0/clipboard.min.js"
+          integrity="sha512-iJh0F10blr9SC3d0Ow1ZKHi9kt12NYa+ISlmCdlCdNZzFwjH1JppRTeAnypvUez01HroZhAmP4ro4AvZ/rG0UQ=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <!-- partial -->
-        <div class="main-panel">
-          <div style="background-color: #111319" class="content-wrapper">
-            
-           <div class="container mx-auto mt-1 text-center">
-            <h2 style="display: inline-block; border-bottom: 5px solid #191C24; padding-bottom: 10px; max-width: 300px; height: 50px; line-height: 1.5;">帳號設定</h2>
-            <p class="text-gray">查看登入資訊並重設密碼</p>
-           </div>
+        <div class="container-fluid page-body-wrapper">
+          <!-- partial:partials/_navbar.html -->
+          <%- include('./components/topnav') %>
+            <!-- partial -->
+            <div class="main-panel">
+              <div style="background-color: #111319" class="content-wrapper">
 
-            <% if (req.session.newaccount || req.session.password) { %>
-            <div style="background-color: #ffca00; color: #121212; border-radius: 15px" class="alert">
-                <div class="alertbtn">
-                  <a class="btn btn-warning btn-clipboard" style="background-color: #ddb100; color: black !important" data-clipboard-action="copy" data-clipboard-target="#clipboard">複製密碼</a>
+                <div class="container mx-auto mt-1 text-center">
+                  <h2
+                    style="display: inline-block; border-bottom: 5px solid #191C24; padding-bottom: 10px; max-width: 300px; height: 50px; line-height: 1.5;">
+                    帳號設定</h2>
+                  <p class="text-gray">查看登入資訊並重設密碼</p>
                 </div>
-                <% if (req.session.newaccount) { %>
-                  面板上已為您建立了一個新帳戶<br>
-                <% } %>
-                <% if (req.session.password) { %>
-                  密碼已變更為 <span id="clipboard"><%= req.session.password %></span> 如果您無法登入，請確保此處顯示的密碼
-                <% } else { %>
-                  請檢查您的電子郵件以設定您的密碼
-                <% } %>
-            </div>
-        <% } %>
-        
-            <div class="row justify-content-center">
-              <div class="col-md-6 grid-margin stretch-card">
-                <div class="card">
-                  <div class="card-body">
-                    <form class="forms-sample">
 
-                      <div class="form-group">
-                        <label for="inputUsername">ID（使用者名稱）</label>
-                        <input style="border-radius: 15px;" type="text" class="form-control" value="<%= pterodactyl.username %>" placeholder="<%= pterodactyl.username %>" disabled>
-                      </div> 
-
-              	      <div class="form-group">
-                        <label for="inputEmail">電子郵件</label>
-                        <input style="border-radius: 15px;" type="email" class="form-control" value="<%= pterodactyl.email %>" placeholder="<%= pterodactyl.email %>" disabled>
-                      </div>
-
-                      <div class="form-group">
-                        <label for="inputClientName">用戶名稱</label>
-                        <input style="border-radius: 15px;" type="text" class="form-control" value="<%= pterodactyl.first_name %><%= pterodactyl.last_name %>" placeholder="<%= pterodactyl.first_name %><%= pterodactyl.last_name %>" disabled>
-                      </div>
- 
-                      <div class="form-group">
-                        <label for="inputAccoutnCreatedAt">帳號創建時間</label>
-                        <input style="border-radius: 15px;" type="text" class="form-control" value="<%= pterodactyl.created_at %>" placeholder="<%= pterodactyl.created_at %>" disabled>
-                      </div>
-
-              		  <a role="button" class="btn btn-primary btn-lg" href="/regen">重設帳號密碼</a>
-              		  <a role="button" class="btn btn-primary btn-lg" href="/updateinfo">重新整理帳號資料</a>
-                    </form>
+                <% if (req.session.newaccount || req.session.password) { %>
+                  <div style="background-color: #ffca00; color: #121212; border-radius: 15px" class="alert">
+                    <div class="alertbtn">
+                      <a class="btn btn-warning btn-clipboard"
+                        style="background-color: #ddb100; color: black !important" data-clipboard-action="copy"
+                        data-clipboard-target="#clipboard">複製密碼</a>
+                    </div>
+                    <% if (req.session.newaccount) { %>
+                      面板上已為您建立了一個新帳戶<br>
+                      <% } %>
+                        <% if (req.session.password) { %>
+                          密碼已變更為 <span id="clipboard">
+                            <%= req.session.password %>
+                          </span> 如果您無法登入，請確保此處顯示的密碼
+                          <% } else { %>
+                            請檢查您的電子郵件以設定您的密碼
+                            <% } %>
                   </div>
-                </div>
+                  <% } %>
+
+                    <div class="row justify-content-center">
+                      <div class="col-md-6 grid-margin stretch-card">
+                        <div class="card">
+                          <div class="card-body">
+                            <form class="forms-sample">
+
+                              <div class="form-group">
+                                <label for="inputUsername">ID（使用者名稱）</label>
+                                <input style="border-radius: 15px;" type="text" class="form-control"
+                                  value="<%= pterodactyl.username %>" placeholder="<%= pterodactyl.username %>"
+                                  disabled>
+                              </div>
+
+                              <div class="form-group">
+                                <label for="inputEmail">電子郵件</label>
+                                <input style="border-radius: 15px;" type="email" class="form-control"
+                                  value="<%= pterodactyl.email %>" placeholder="<%= pterodactyl.email %>" disabled>
+                              </div>
+
+                              <div class="form-group">
+                                <label for="inputClientName">用戶名稱</label>
+                                <input style="border-radius: 15px;" type="text" class="form-control"
+                                  value="<%= pterodactyl.first_name %><%= pterodactyl.last_name %>"
+                                  placeholder="<%= pterodactyl.first_name %><%= pterodactyl.last_name %>" disabled>
+                              </div>
+
+                              <div class="form-group">
+                                <label for="inputAccoutnCreatedAt">帳號創建時間</label>
+                                <input style="border-radius: 15px;" type="text" class="form-control"
+                                  value="<%= pterodactyl.created_at %>" placeholder="<%= pterodactyl.created_at %>"
+                                  disabled>
+                              </div>
+
+                              <a role="button" class="btn btn-primary btn-lg" href="/regen">重設帳號密碼</a>
+                              <a role="button" class="btn btn-primary btn-lg" href="/updateinfo">重新整理帳號資料</a>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
               </div>
+              <script>
+                var clipboard = new Clipboard('.btn-clipboard');
+              </script>
+              <!-- content-wrapper ends -->
+              <%- include('./components/footer') %>
             </div>
-          </div>
-          <script>
-            var clipboard = new Clipboard('.btn-clipboard');
-          </script>
-          <!-- content-wrapper ends -->
-          <%- include('./components/footer') %>
+            <!-- main-panel ends -->
         </div>
-        <!-- main-panel ends -->
-      </div>
-      <!-- page-body-wrapper ends -->
+        <!-- page-body-wrapper ends -->
     </div>
-      <!-- container-scroller -->
-      <!-- plugins:js -->
-      <!-- endinject -->
-      <!-- Plugin js for this page -->
-      <script src="/assets/vendors/select2/select2.min.js"></script>
-      <script src="/assets/vendors/typeahead.js/typeahead.bundle.min.js"></script>
-      <!-- End plugin js for this page -->
-      <!-- inject:js -->
-      <%- include('./components/scripts') %>
+    <!-- container-scroller -->
+    <!-- plugins:js -->
+    <!-- endinject -->
+    <!-- Plugin js for this page -->
+    <script src="/assets/vendors/select2/select2.min.js"></script>
+    <script src="/assets/vendors/typeahead.js/typeahead.bundle.min.js"></script>
+    <!-- End plugin js for this page -->
+    <!-- inject:js -->
+    <%- include('./components/scripts') %>
       <!-- endinject -->
       <!-- Custom js for this page -->
       <script src="/assets/js/file-upload.js"></script>
       <script src="/assets/js/typeahead.js"></script>
       <script src="/assets/js/select2.js"></script>
       <!-- End custom js for this page -->
-    <style>
-.alertbtn {
-  margin-left: 15px;
-  color: white;
-  font-weight: bold;
-  float: right;
-  font-size: 22px;
-  line-height: 20px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-   </style>
+      <style>
+        .alertbtn {
+          margin-left: 15px;
+          color: white;
+          font-weight: bold;
+          float: right;
+          font-size: 22px;
+          line-height: 20px;
+          cursor: pointer;
+          transition: 0.3s;
+        }
+      </style>
   </body>
+
 </html>

@@ -15,6 +15,7 @@
         "modifyserverdisabled": "/servers/modify?err=disabled",
         "deleteserverdisabled": "/delete?err=disabled",
         "regenpassword": "/settings",
+        "renewContract": "/renew-contract",
         "setresources": "/admin",
         "failedsetresources": "/admin",
         "renewserver": "/dashboard",	
@@ -54,7 +55,8 @@
         "j4r": "j4r.ejs",
         "buy": "buy.ejs",
         "afk": "afk.ejs",
-        "store": "store.ejs"
+        "store": "store.ejs",
+        "renew-contract": "renew-contract.ejs"
     },
     "mustbeloggedin": [
         "/dashboard",
@@ -66,7 +68,8 @@
         "/j4r",
         "/buy",
         "/afk",
-        "/store"
+        "/store",
+        "/renew-contract"
     ],
     "mustbeadmin": [
         "/admin",
