@@ -52,23 +52,30 @@ module.exports.load = async function (app, db, timeoutDB) {
                 console.log(error);
             }
         })();
-        if (resources & !await dbHelper.get(timeoutDB, uuid)) log('訂單創建', `\`${userId}\` 創建了訂單\n編號為 \`order-${uuid}\`\n\`\`\`CPU: ${resources.cpu} 核心\nRam: ${resources.ram} GB\nDisk: ${resources.disk} GB\nServers: ${resources.servers} 個\`\`\``);
+
+        if (resources) log('訂單創建', `\`${userId}\` 創建了訂單\n編號為 \`order-${uuid}\`\n\`\`\`CPU: ${resources.cpu} 核心\nRam: ${resources.ram} GB\nDisk: ${resources.disk} GB\nServers: ${resources.servers} 個\`\`\``);
+        res.send('1|OK');
     })
     app.post("/order", async (req, res) => {
         const orderInfo = JSON.parse(await dbHelper.get(timeoutDB, req.body.MerchantTradeNo)); // 有cpu、ran、disk、servers、userID
-        console.log(orderInfo);
-        console.log(orderInfo.cpu);
-        const orderUser = await db.get(`extra-${orderInfo.id}`) // 讀取extra-ID資料表
         let extra = {
             ram: 0,
             disk: 0,
             cpu: 0,
             servers: 0
         }
+        let orderExtra = {
+            ram: orderInfo.ram * 1024,
+            disk: orderInfo.disk * 1024,
+            cpu: orderInfo.cpu * 100,
+            servers: orderInfo.servers
+        }
 
         // 偵測是否有extra-資料 沒有的話創一個
-        if (!orderUser) await db.set(`extra-${orderInfo.id}`, extra);
+        if (!await db.get(`extra-${orderInfo.id}`)) await db.set(`extra-${orderInfo.id}`, extra);
         else await db.get(`extra-${orderInfo.id}`);
+
+        const orderUser = await db.get(`extra-${orderInfo.id}`); // 讀取extra-ID資料表
 
         // 測試有沒有偵測到orderInfo
         if (!orderInfo) return;
@@ -78,10 +85,10 @@ module.exports.load = async function (app, db, timeoutDB) {
         // 檢測原本資源<伺服器數量>是否為null
         if (!resources.servers) resources.servers = 0;
 
-        const cpu = orderInfo.cpu * 100 + resources.cpu; // 核心轉%
-        const ram = orderInfo.ram * 1024 + resources.ram; // GB轉MB
-        const disk = orderInfo.disk * 1024 + resources.disk; // GB轉MB
-        const servers = parseInt(orderInfo.servers) + parseInt(resources.servers);
+        const cpu = orderUser.cpu * 100 + resources.cpu * 100; // 核心轉%
+        const ram = orderUser.ram * 1024 + resources.ram * 1024; // GB轉MB
+        const disk = orderUser.disk * 1024 + resources.disk * 1024; // GB轉MB
+        const servers = parseInt(orderUser.servers) + parseInt(resources.servers);
         extra = {
             ram: ram,
             disk: disk,
@@ -92,7 +99,7 @@ module.exports.load = async function (app, db, timeoutDB) {
         log('訂單完成', `\`${orderInfo.id}\` 完成了訂單\n編號為 \`order-${req.body.MerchantTradeNo}\`\n\`\`\`CPU: ${orderInfo.cpu} 核心\nRam: ${orderInfo.ram} GB\nDisk: ${orderInfo.disk} GB\nServers: ${orderInfo.servers} 個\`\`\``);
         await dbHelper.remove(timeoutDB, req.body.MerchantTradeNo);
         res.send('1|OK');
-        await dbHelper.orderCompleted(timeoutDB, req.body.MerchantTradeNo, extra, orderInfo.id, req.body.PaymentDate);
+        await dbHelper.orderCompleted(timeoutDB, req.body.MerchantTradeNo, orderExtra, orderInfo.id, req.body.PaymentDate);
     });
 
 };

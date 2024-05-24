@@ -75,7 +75,6 @@ const SQLite3 = require('sqlite3');
 const db = new Keyv(settings.database);
 const timeoutDB = new SQLite3.Database('timeoutDB.sqlite', SQLite3.OPEN_READWRITE | SQLite3.OPEN_CREATE, (err) => {
 	if (err) console.error(err.message);
-	console.log('Connected to the timeoutDB database.');
 });
 
 db.on('error', err => {
