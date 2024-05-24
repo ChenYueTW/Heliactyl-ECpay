@@ -1,6 +1,7 @@
 const indexjs = require("../index.js");
 const adminjs = require('./admin.js');
 const timeoutInfo = require('../misc/timeoutInfo.js');
+const dbHelper = require('../misc/dbHelper.js');
 const fs = require("fs");
 const ejs = require("ejs");
 const fetch = require('node-fetch');
@@ -102,28 +103,32 @@ module.exports.load = async function (app, db, timeoutDB) {
 	app.get("/api/getTimeoutJson", async (req, res) =>{
 		let auth = await check(req, res);
 		if (!auth) return;
-		const timeoutDB = timeoutInfo.readDB(timeoutDB);
 
-		const timeoutJson = timeoutInfo.readJson();
-		res.send({
-			status: "success",
-			json: timeoutJson
-		});
+		(async () => {
+			try {
+				const allData = await dbHelper.getAllKey(timeoutDB);
+				res.send({
+					status: "success",
+					json: allData
+				});
+			} catch (error) {
+				console.error("Error fetching all data:", error);
+			}
+		})();
 	});
 
-	/** POST /api/isRemindJson */
+	/**
+	 * POST /api/isRemindJson
+	*/
 
 	app.post("/api/isRemindJson", async (req, res) => {
 		let auth = await check(req, res);
 		if (!auth) return;
 		if (!req.query.orderId) return res.send({ status: "missing orderId" });
-		
-		const orderId = req.query.orderId;
-		let timeoutJson = timeoutInfo.readJson();
-		timeoutJson[orderId].isRemind = true;
-		fs.writeFileSync('timeout.json', JSON.stringify(timeoutJson, null, 2));
 
-		res.send({ status: "success" })
+		await dbHelper.updateValue(timeoutDB, req.query.orderId, 'isRemind', true);	
+
+		res.send({ status: "success" });
 	});
 
 	/**
