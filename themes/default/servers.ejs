@@ -57,11 +57,6 @@
 
                       <a role="button" style="border-radius: 15px; display: inline-flex; align-items: center;" class="btn btn-warning btn-lg" href="/servers/edit?id=<%= pterodactyl.relationships.servers.data[i].attributes.id %>">
                       <i class="mdi mdi-pencil mr-2 d-flex justify-content-center"></i> 編輯資源</a>
-
-                      <% if (settings.renewals.status) { %> 
-                        <a role="button" style="border-radius: 15px; display: inline-flex; align-items: center;" class="btn btn-success btn-lg" href="/renew?id=<%= pterodactyl.relationships.servers.data[i].attributes.id %>">
-                        <i class="mdi mdi-refresh mr-2 d-flex justify-content-center"></i> Renew</a>
-                      <% } %>
                       
                       </form>
                     </div>

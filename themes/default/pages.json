@@ -15,7 +15,7 @@
         "modifyserverdisabled": "/servers/modify?err=disabled",
         "deleteserverdisabled": "/delete?err=disabled",
         "regenpassword": "/settings",
-        "renewContract": "/renew-contract",
+        "historyOrder": "/history-order",
         "setresources": "/admin",
         "failedsetresources": "/admin",
         "renewserver": "/dashboard",	
@@ -56,7 +56,7 @@
         "buy": "buy.ejs",
         "afk": "afk.ejs",
         "store": "store.ejs",
-        "renew-contract": "renew-contract.ejs"
+        "history-order": "history-order.ejs"
     },
     "mustbeloggedin": [
         "/dashboard",
@@ -69,7 +69,7 @@
         "/buy",
         "/afk",
         "/store",
-        "/renew-contract"
+        "/history-order"
     ],
     "mustbeadmin": [
         "/admin",

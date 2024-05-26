@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('./components/head') %>
+
+	<body>
+		<div class="container-scroller">
+			<!-- partial:partials/_sidebar.html -->
+			<%- include('./components/sidebar') %>
+				<!-- partial -->
+				<div class="container-fluid page-body-wrapper">
+					<!-- partial:partials/_navbar.html -->
+					<%- include('./components/topnav') %>
+						<!-- partial -->
+						<div class="main-panel">
+							<div style="background-color: #111319" class="content-wrapper">
+								<div class="container mx-auto mt-1 text-center">
+									<h2
+										style="display: inline-block; border-bottom: 5px solid #191C24; padding-bottom: 10px; max-width: 300px; height: 50px; line-height: 1.5;">
+										歷史訂單
+									</h2>
+									<p class="text-gray">你的歷史訂單</p>
+								</div>
+
+								<div class="row justify-content-center">
+									<div class="col-md-8 grid-margin stretch-card">
+										<div class="card">
+											<div class="card-body">
+												<div id="orders-container">
+													<!-- Orders will be displayed here -->
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<%- include('./components/footer') %>
+						</div>
+						<!-- main-panel ends -->
+				</div>
+				<!-- page-body-wrapper ends -->
+		</div>
+		<!-- container-scroller -->
+		<!-- plugins:js -->
+		<!-- endinject -->
+		<!-- Plugin js for this page -->
+		<script src="/assets/vendors/select2/select2.min.js"></script>
+		<script src="/assets/vendors/typeahead.js/typeahead.bundle.min.js"></script>
+		<!-- End plugin js for this page -->
+		<!-- inject:js -->
+		<%- include('./components/scripts') %>
+			<!-- endinject -->
+			<!-- Custom js for this page -->
+			<script src="/assets/js/file-upload.js"></script>
+			<script src="/assets/js/typeahead.js"></script>
+			<script src="/assets/js/select2.js"></script>
+			<!-- End custom js for this page -->
+			<style>
+				.order-card {
+					background-color: #1a1a1d;
+					color: #ffffff;
+					padding: 15px;
+					margin-bottom: 10px;
+					border-radius: 5px;
+				}
+
+				.btn-renew {
+					background-color: #007bff;
+					color: white;
+					padding: 10px 20px;
+					border: none;
+					border-radius: 5px;
+					cursor: pointer;
+				}
+
+				.btn-renew:hover {
+					background-color: #0056b3;
+				}
+			</style>
+			<script>
+				async function fetchOrders() {
+					try {
+						const response = await fetch('/api/getAllOrders');
+						const orders = await response.json();
+						const container = document.getElementById('orders-container');
+						container.innerHTML = '';
+
+						if (orders && orders.length > 0) {
+							orders.forEach(order => {
+								const orderCard = document.createElement('div');
+								orderCard.className = 'order-card';
+								orderCard.innerHTML = `
+                            		<p>編號: ${escapeHtml(order.key)}</p>
+									<p><i class="mdi mdi-memory"></i>   CPU: ${escapeHtml(String(order.value.orderInfo.cpu / 100))} 核</p>
+									<p><i class="mdi mdi-layers"></i>   RAM: ${escapeHtml(String(order.value.orderInfo.ram / 1024))} GB</p>
+									<p><i class="mdi mdi-harddisk"></i>   DISK: ${escapeHtml(String(order.value.orderInfo.disk / 1024))} GB</p>
+									<p><i class="mdi mdi-server"></i>   SERVERS: ${escapeHtml(String(order.value.orderInfo.servers))} 個</p>
+                            		<p>金額: ${escapeHtml(String(order.value.price))} 元</p>
+									${isPaid(order.value.status) ? `<p>狀態: 已付款</p>` : `<p>狀態: 未付款</p>`}
+                            		${isPaid(order.value.status) ? `<p><i class="mdi mdi-date-range"></i>    到期日期: ${escapeHtml(order.value.timeout)}</p>` : ''}
+                            		${order.value.isRemind && isPaid(order.value.status) ? '<button class="btn-renew">續約</button>' : ''}
+								`;
+								container.appendChild(orderCard);
+							});
+						} else {
+							container.innerHTML = '<p>No orders found.</p>';
+						}
+					} catch (error) {
+						console.error('Error fetching orders:', error);
+					}
+				}
+
+				function escapeHtml(text) {
+					if (typeof text !== 'string') {
+						return '';
+					}
+					const map = {
+						'&': '&amp;',
+						'<': '&lt;',
+						'>': '&gt;',
+						'"': '&quot;',
+						"'": '&#039;'
+					};
+					return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+				}
+
+				function isPaid(status) {
+					if (status == 'UNPAID') return false;
+					else if (status == 'ISPAID') return true;
+				}
+
+				document.addEventListener("DOMContentLoaded", fetchOrders);
+			</script>
+	</body>
+
+</html>

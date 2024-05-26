@@ -1,6 +1,6 @@
 const settings = require("../settings.json");
-const timeoutInfo = require('../misc/timeoutInfo');
-const { CronJob, timeout } = require("cron");
+const dbHelper = require('../misc/dbHelper');
+const { CronJob } = require("cron");
 const getAllServers = require("../misc/getAllServers");
 const fetch = require("node-fetch");
 const chalk = require("chalk");
@@ -12,8 +12,7 @@ if (settings.pterodactyl && settings.pterodactyl.domain && settings.pterodactyl.
 module.exports.load = async function (app, db, timeoutDB) {
 	app.get('/api/getOrderAmount', async (req, res) => {
 		const orderId = req.query.orderId;
-		const totalPrice = timeoutInfo.getOrderTotal(orderId);
-		console.log(timeoutInfo.readDB(timeoutDB));
+		const totalPrice = await dbHelper.getOrderTotal(timeoutDB, orderId);
 
 		// 發送訂單金額 json 給前端
 		res.json({ totalPrice: totalPrice });

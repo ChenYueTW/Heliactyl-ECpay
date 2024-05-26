@@ -139,20 +139,19 @@
         let egg = encodeURIComponent(document.getElementById("InputEgg").value);
         let location = encodeURIComponent(document.getElementById("InputLoc").value);
         
-        <% if (settings.resources.typeRessources == "GB") { %>
+        if (settings.resources.typeRessources == "GB") {
           let ram = encodeURIComponent(document.getElementById("InputRAM").value * 1024);
           let disk = encodeURIComponent(document.getElementById("InputDisk").value * 1024);
-        <% } else { %>
+        } else {
           let ram = encodeURIComponent(document.getElementById("InputRAM").value);
           let disk = encodeURIComponent(document.getElementById("InputDisk").value);
-        <% } %>
+        }
         
-        <% if (settings.resources.typeCPU == "Core") { %>
+        if (settings.resources.typeCPU == "Core") {
         let cpu = encodeURIComponent(document.getElementById("InputCPU").value * 100);
-        <% } else { %>
+        } else {
         let cpu = encodeURIComponent(document.getElementById("InputCPU").value);
-        <% } %>
-
+        }
 
         document.location.href = `/create?name=${name}&egg=${egg}&ram=${ram}&disk=${disk}&cpu=${cpu}&location=${location}`;
       };

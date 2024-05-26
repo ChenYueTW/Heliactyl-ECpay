@@ -188,11 +188,6 @@ apifiles.forEach(file => {
 	apifile.load(app, db, timeoutDB);
 });
 
-// Load Interval
-const timeoutInfo = require('./misc/timeoutInfo.js');
-timeoutInfo.checkJsonExistence();
-timeoutInfo.initTimers();
-
 // Load route
 
 app.all("*", async (req, res) => {

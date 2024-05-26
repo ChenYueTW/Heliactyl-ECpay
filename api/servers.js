@@ -7,8 +7,6 @@ const log = require("../misc/log.js");
 
 const fetch = require("node-fetch");
 const fs = require("fs");
-const formateDateTime = require("../misc/formateDateTime.js");
-
 
 if (settings.pterodactyl && settings.pterodactyl.domain && settings.pterodactyl.domain.endsWith("/")) {
   settings.pterodactyl.domain = settings.pterodactyl.domain.slice(0, -1);

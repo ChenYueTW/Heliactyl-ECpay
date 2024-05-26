@@ -56,6 +56,16 @@
       </a>
     </li>
     <% } %>
+    <% if (settings.pages['history order'] === true) { %>
+      <li class="nav-item menu-items">
+        <a class="nav-link" href="../history-order">
+          <span class="menu-icon">
+            <i class="mdi mdi-history d-flex justify-content-center align-items-center"></i>
+          </span>
+          <span class="menu-title">歷史訂單</span>
+        </a>
+      </li>
+      <% } %>
     <% if (settings.pages['redeem coupon'] === true) { %>
     <li class="nav-item menu-items">
       <a class="nav-link" href="../redeem">

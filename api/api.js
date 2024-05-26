@@ -1,6 +1,5 @@
 const indexjs = require("../index.js");
 const adminjs = require('./admin.js');
-const timeoutInfo = require('../misc/timeoutInfo.js');
 const dbHelper = require('../misc/dbHelper.js');
 const fs = require("fs");
 const ejs = require("ejs");
@@ -98,7 +97,7 @@ module.exports.load = async function (app, db, timeoutDB) {
 
 	/** GET /api/getTimeoutJson
 	 *  get timeout user
-	 */
+	*/
 	
 	app.get("/api/getTimeoutJson", async (req, res) =>{
 		let auth = await check(req, res);

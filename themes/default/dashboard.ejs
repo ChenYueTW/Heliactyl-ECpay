@@ -47,9 +47,9 @@
               <div class="col-md-6 grid-margin stretch-card">
                 <div class="card">
                   <div class="card-body">
-                    <h4 class="card-title">續約資源</h4>
-                    <h5>續約訂單資源</h5><br>
-                    <a class="btn btn-primary btn-lg" href="../renew-contract">購買資源</a>
+                    <h4 class="card-title">歷史訂單</h4>
+                    <h5>查看歷史訂單以及續約資源</h5><br>
+                    <a class="btn btn-primary btn-lg" href="../history-order">歷史訂單</a>
                     </div>
                   </div>
                 </div>
@@ -57,9 +57,9 @@
               <div class="col-md-6 grid-margin stretch-card">
                 <div class="card">
                   <div class="card-body">
-                    <h4 class="card-title">部署伺服器</h4>
-                    <h5>如果想部署伺服器，請前往伺服器列表 -> 部署伺服器或按一下下面的按鈕</h5><br>
-                    <a class="btn btn-primary btn-lg" href="../servers/new">部屬伺服器</a>
+                    <h4 class="card-title">創建伺服器</h4>
+                    <h5>創建託管伺服器</h5><br>
+                    <a class="btn btn-primary btn-lg" href="../servers/new">創建伺服器</a>
                     </div>
                   </div>
                 </div>
@@ -75,10 +75,7 @@
                         <table class="table">
                           <thead>
                               <tr>
-                                  <th>名稱</th>
-                                  <% if (settings.renewals.status) { %> 
-                                  <th>Time Left</th>
-                                  <% } %>   
+                                  <th>名稱</th> 
                                   <th>CPU</th>
                                   <th>RAM（記憶體）</th>
                                   <th>Disk（儲存空間）</th>
@@ -99,41 +96,7 @@
                                               <span class="pl-2"><%= pterodactyl.relationships.servers.data[i].attributes.name.length > 40 ? pterodactyl.relationships.servers.data[i].attributes.name.slice(0, 40) + "..." : pterodactyl.relationships.servers.data[i].attributes.name %></span>
                                           </td>
                                           <!-- END Server Name --> 
-                                          
-                                          <!-- Time Left --> 
-                                          <% if (settings.renewals.status) { %> 
-                                          <td>
-                                            <span id="time-left-<%= pterodactyl.relationships.servers.data[i].attributes.id %>">Loading...</span>
-                                            <script>
-                                                fetch(`/api/renewalstatus?id=<%= pterodactyl.relationships.servers.data[i].attributes.id %>`)
-                                                    .then(response => response.json())
-                                                    .then(data => {
-                                                        const timeLeftElement = document.getElementById('time-left-<%= pterodactyl.relationships.servers.data[i].attributes.id %>');
-                                                        if (data.renewable) {
-                                                            if (data.text.includes("day")) {
-                                                                const regexResult = /(\d+) days and (\d+\.\d+) hours/.exec(data.text);
-                                                                if (regexResult) {
-                                                                    const days = parseInt(regexResult[1]);
-                                                                    const hours = Math.floor(parseFloat(regexResult[2]));
-                                                                    const minutes = Math.round((parseFloat(regexResult[2]) - hours) * 60);
-                                                                    const formattedTime = days > 0 ? `${days} days, ${hours} hours, and ${minutes} minutes` : `${hours} hours and ${minutes} minutes`;
-                                                                    timeLeftElement.innerText = formattedTime;
-                                                                } else {
-                                                                    timeLeftElement.innerText = data.text;
-                                                                } 
-                                                              } else {
-                                                                const timeParts = data.text.split(" ");
-                                                                const hours = Math.floor(parseFloat(timeParts[0]));
-                                                                const minutes = Math.round((parseFloat(timeParts[0]) - hours) * 60);
-                                                                timeLeftElement.innerText = `${hours} hours and ${minutes} minutes`;
-                                                            }
-                                                        } else {
-                                                            timeLeftElement.innerText = 'Not Renewable';
-                                                        }
-                                                    });
-                                            </script>
-                                        </td>         
-                                        <% } %>                                                                      
+                                                                                                               
                                           <!-- END Time Left --> 
 
                                           <!-- Information CPU,RAM and Disk --> 
@@ -146,9 +109,6 @@
                                           <!-- Options --> 
                                            <div class="btn-g">
                                                <a role="button" class="badge badge-background-blue" href="https://panel.misthost.net/server/<%= pterodactyl.relationships.servers.data[i].attributes.identifier %>" target="_blank">連結</a>
-                                               <% if (settings.renewals.status) { %> 
-                                               <a role="button" class="badge badge-background-green" href="/renew?id=<%= pterodactyl.relationships.servers.data[i].attributes.id %>">Renew</a>
-                                               <% } %> 
                                                <a role="button" class="badge badge-background-orange" href="/servers/edit?id=<%= pterodactyl.relationships.servers.data[i].attributes.id %>">編輯</a>
                                                <a role="button" class="badge badge-background-red" onclick="if (confirm('確定要刪除伺服器嗎？此操作是不可逆轉的')) { window.location.href='/delete?id=<%= pterodactyl.relationships.servers.data[i].attributes.id %>' }">刪除</a>
                                            </div>
