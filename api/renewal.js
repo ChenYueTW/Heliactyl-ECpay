@@ -10,13 +10,6 @@ if (settings.pterodactyl && settings.pterodactyl.domain && settings.pterodactyl.
 }
 
 module.exports.load = async function (app, db, timeoutDB) {
-	app.get('/api/getOrderAmount', async (req, res) => {
-		const orderId = req.query.orderId;
-		const totalPrice = await dbHelper.getOrderTotal(timeoutDB, orderId);
-
-		// 發送訂單金額 json 給前端
-		res.json({ totalPrice: totalPrice });
-	});
 	// Renewal system is...
 	app.get(`/api/renewalstatus`, async (req, res) => {
 		if (!settings.renewals.status) return res.json({ error: true });

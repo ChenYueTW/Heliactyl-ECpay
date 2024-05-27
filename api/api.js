@@ -91,6 +91,7 @@ module.exports.load = async function (app, db, timeoutDB) {
 				servers: 0
 			},
 			userinfo: userinfo,
+			userId: req.query.id,
 			coins: newsettings.api.client.coins.enabled == true ? (await db.get("coins-" + req.query.id) ? await db.get("coins-" + req.query.id) : 0) : null
 		});
 	});

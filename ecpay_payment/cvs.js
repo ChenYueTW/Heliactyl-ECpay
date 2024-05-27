@@ -1,6 +1,7 @@
 const settings = require('../settings.json');
 const moment = require('moment');
 const crypto = require('crypto');
+const { default: ShortUniqueId } = require('short-unique-id');
 
 // 生成 CheckValue
 function generateCheckValue(params) {
@@ -45,6 +46,34 @@ function generateOrderDetails(req, uuid) {
     }
     data.CheckMacValue = generateCheckValue(data);
     return data;
+}
+
+function renewOrder(uuid, resources) {
+    if (!resources) return;
+
+    const cpu = resources.cpu / 100;
+    const ram = resources.ram / 1024;
+    const disk = resources.disk / 1024;
+    const servers = resources.servers;
+    const total = (cpu * 50) + (ram * 20) + (disk * 10) + (servers * 30);
+
+    let data = {
+        MerchantID: settings.ecpay.merchantId,
+        MerchantTradeNo: `${uuid}`,
+        MerchantTradeDate: moment().format('YYYY/MM/DD HH:mm:ss'),
+        PaymentType: 'aio',
+        TotalAmount: total,
+        TradeDesc: `購買資訊： CPU ${cpu} 核、RAM ${ram} GB、DISK ${disk} GB、伺服器數量 ${servers} 個`,
+        ItemName: 'MistHost資源購買',
+        ReturnURL: `https://helia.misthost.net/renew_order`,
+        ChoosePayment: 'CVS',
+        EncryptType: 1,
+        StoreExpireDate: 4320,
+        PaymentInfoURL: 'https://helia.misthost.net/renew_generate_code',
+    }
+    data.CheckMacValue = generateCheckValue(data);
+
+    return ecpayForm(data);
 }
 
 function ecpayForm(data) {
@@ -100,5 +129,6 @@ function getResource(req) {
 module.exports = {
     generateOrderDetails,
     ecpayForm,
-    getResource
+    getResource,
+    renewOrder
 }

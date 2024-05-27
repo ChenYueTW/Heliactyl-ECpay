@@ -73,6 +73,43 @@ async function updateValue(timeoutDB, key, field, newValue) {
     }
 }
 
+async function addNewOrderIdValue(timeoutDB, orderId, newOrderId) {
+    const value = await get(timeoutDB, orderId);
+    value.newOrderId = newOrderId;
+    const updatedValue = JSON.stringify(value);
+
+    try {
+        timeoutDB.run("UPDATE key_value SET value = ? WHERE key = ?", [updatedValue, orderId], function (updateErr) {
+            if (updateErr) return console.error('Error updating value: ', updateErr.message);
+        })
+    } catch (error) {
+        console.log('Update Value err: ', error);
+    }
+}
+
+async function searchValue(timeoutDB, searchOrderId) {
+    timeoutDB.all("SELECT key, value FROM key_value", [], (err, rows) => {
+        if (err) return console.error('Error retriving records: ', err.message);
+
+        let foundKey = null;
+
+        for (const row of rows) {
+            try {
+                let valueObj = JSON.parse(row.value);
+
+                if (valueObj.newOrderId === searchOrderId) {
+                    foundKey = row.key;
+                    break;
+                }
+            } catch (parseErr) {
+                console.error('Error parsing JSON:', parseErr.message);
+            }
+        }
+
+        return foundKey ? foundKey : null;
+    })
+}
+
 async function getOrderTotal(timeoutDB, orderId) {
     let orderInfo;
     try {
@@ -105,6 +142,17 @@ const getOrdersByUserId = async (timeoutDB, userId) => {
     });
 }
 
+async function removeNewOrderId(timeoutDB, orderId) {
+    let value = await get(timeoutDB, orderId);
+    delete value.newOrderId;
+
+    const newValue = JSON.stringify(value);
+
+    timeoutDB.run("UPDATE key_value SET value = ? WHERE key = ?", [newValue, orderId], function (err) {
+        if (err) return console.error(err.message);
+    });
+}
+
 module.exports = {
     get,
     set,
@@ -113,5 +161,8 @@ module.exports = {
     getAllKey,
     updateValue,
     getOrderTotal,
-    getOrdersByUserId
+    getOrdersByUserId,
+    addNewOrderIdValue,
+    searchValue,
+    removeNewOrderId
 }

@@ -87,6 +87,10 @@
 						if (orders && orders.length > 0) {
 							orders.forEach(order => {
 								const orderCard = document.createElement('div');
+								const buttonHTML = `
+									<button class="btn-renew" onclick="renewOrder('${order.key}', '${escapeHtml(JSON.stringify(order.value))}')">
+                            		續約</button>
+								`;
 								orderCard.className = 'order-card';
 								orderCard.innerHTML = `
                             		<p>編號: ${escapeHtml(order.key)}</p>
@@ -97,7 +101,7 @@
                             		<p>金額: ${escapeHtml(String(order.value.price))} 元</p>
 									${isPaid(order.value.status) ? `<p>狀態: 已付款</p>` : `<p>狀態: 未付款</p>`}
                             		${isPaid(order.value.status) ? `<p><i class="mdi mdi-date-range"></i>    到期日期: ${escapeHtml(order.value.timeout)}</p>` : ''}
-                            		${order.value.isRemind && isPaid(order.value.status) ? '<button class="btn-renew">續約</button>' : ''}
+                            		${order.value.isRemind && isPaid(order.value.status) ? buttonHTML : ''}
 								`;
 								container.appendChild(orderCard);
 							});
@@ -108,7 +112,6 @@
 						console.error('Error fetching orders:', error);
 					}
 				}
-
 				function escapeHtml(text) {
 					if (typeof text !== 'string') {
 						return '';
@@ -126,6 +129,36 @@
 				function isPaid(status) {
 					if (status == 'UNPAID') return false;
 					else if (status == 'ISPAID') return true;
+				}
+				async function renewOrder(orderId, data) {
+					try {
+						const parseData = JSON.parse(data);
+						const response = await fetch('/renew-order', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json'
+							},
+							body: JSON.stringify({ orderId, data })
+						});
+
+						if (response.ok) {
+							// 取得算出來的html form
+							const htmlForm = await response.text();
+							console.log(htmlForm);
+							const formContainer = document.createElement('div');
+							formContainer.innerHTML = htmlForm;
+
+							const form = formContainer.querySelector('form');
+							console.log(form);
+							if (form) {
+								document.body.appendChild(form);
+								form.submit();
+							} else console.error('Form element not found in the response');
+							
+						} else console.error('Error renewing order:', response.statusText);
+					} catch (error) {
+						console.error('Error renewing order:', error);
+					}
 				}
 
 				document.addEventListener("DOMContentLoaded", fetchOrders);

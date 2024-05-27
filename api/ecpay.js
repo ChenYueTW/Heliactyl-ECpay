@@ -34,6 +34,8 @@ module.exports.load = async function (app, db, timeoutDB) {
     });
     app.post("/generate_code", async (req, res) => {
         const uuid = req.body.MerchantTradeNo;
+        if (!resources) return;
+
         const cpu = resources.cpu * 50;
         const ram = resources.ram * 20;
         const disk = resources.disk * 10;
@@ -64,8 +66,9 @@ module.exports.load = async function (app, db, timeoutDB) {
         })();
 
         if (resources) log('訂單創建', `\`${userId}\` 創建了訂單\n編號為 \`order-${uuid}\`\n\`\`\`CPU: ${resources.cpu} 核心\nRam: ${resources.ram} GB\nDisk: ${resources.disk} GB\nServers: ${resources.servers} 個\`\`\``);
+
         res.send('1|OK');
-    })
+    });
     app.post("/order", async (req, res) => {
         const orderInfo = await dbHelper.get(timeoutDB, req.body.MerchantTradeNo); // 有cpu、ran、disk、servers、userID
         let extra = {
@@ -113,5 +116,4 @@ module.exports.load = async function (app, db, timeoutDB) {
         res.send('1|OK');
         await dbHelper.orderCompleted(timeoutDB, req.body.MerchantTradeNo, orderExtra, orderInfo.userId, req.body.PaymentDate);
     });
-
 };
