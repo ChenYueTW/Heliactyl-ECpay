@@ -2,6 +2,9 @@
 
 ## Change History
 
+### v1.6
+Fix the order history detection timeout button
+
 ### v1.5
 Renewal system completed
 

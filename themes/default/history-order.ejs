@@ -101,7 +101,7 @@
                             		<p>金額: ${escapeHtml(String(order.value.price))} 元</p>
 									${isPaid(order.value.status) ? `<p>狀態: 已付款</p>` : `<p>狀態: 未付款</p>`}
                             		${isPaid(order.value.status) ? `<p><i class="mdi mdi-date-range"></i>    到期日期: ${escapeHtml(order.value.timeout)}</p>` : ''}
-                            		${order.value.isRemind && isPaid(order.value.status) ? buttonHTML : ''}
+                            		${order.value.isRemind && isPaid(order.value.status) && isTimeout(order.value.timeout) ? buttonHTML : ''}
 								`;
 								container.appendChild(orderCard);
 							});
@@ -125,7 +125,6 @@
 					};
 					return text.replace(/[&<>"']/g, function (m) { return map[m]; });
 				}
-
 				function isPaid(status) {
 					if (status == 'UNPAID') return false;
 					else if (status == 'ISPAID') return true;
@@ -159,6 +158,12 @@
 					} catch (error) {
 						console.error('Error renewing order:', error);
 					}
+				}
+				function isTimeout(date) {
+					// 時間差
+					const timeDifferences = new Date() - new Date(date);
+
+					return timeDifferences < 7 * 24 * 60 * 60 * 1000 ? true : false;
 				}
 
 				document.addEventListener("DOMContentLoaded", fetchOrders);
