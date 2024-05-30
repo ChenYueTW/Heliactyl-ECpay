@@ -119,16 +119,16 @@ module.exports.load = async function (app, db, timeoutDB) {
 
 	/**
 	 * POST /api/isRemindJson
-	*/
+	 */
 
 	app.post("/api/isRemindJson", async (req, res) => {
 		let auth = await check(req, res);
 		if (!auth) return;
 		if (!req.query.orderId) return res.send({ status: "missing orderId" });
 
-		await dbHelper.updateValue(timeoutDB, req.query.orderId, 'isRemind', true);	
+		const idFoundId = await dbHelper.updateValue(timeoutDB, req.query.orderId, 'isRemind', true);
 
-		res.send({ status: "success" });
+		res.send({ status: "success", isFound: idFoundId ? true : false });
 	});
 
 	/**

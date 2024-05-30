@@ -2,11 +2,8 @@
 
 ## Change History
 
-### v1.6
-Fix the order history detection timeout button
-
 ### v1.5
-Renewal system completed
+Fix server creating error
 
 ### v1.4
 Add change history
