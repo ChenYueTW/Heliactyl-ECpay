@@ -3,7 +3,7 @@
 ## Change History
 
 ### v1.5
-Fix server creating error
+Fix copy password button
 
 ### v1.4
 Add change history

@@ -9,7 +9,21 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.4.0/clipboard.min.js"
           integrity="sha512-iJh0F10blr9SC3d0Ow1ZKHi9kt12NYa+ISlmCdlCdNZzFwjH1JppRTeAnypvUez01HroZhAmP4ro4AvZ/rG0UQ=="
           crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
         <!-- partial -->
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            var clipboard = new ClipboardJS('.btn-clipboard');
+            clipboard.on('success', function(e) {
+              console.log('Password copied!');
+              e.clearSelection();
+            });
+        
+            clipboard.on('error', function(e) {
+              console.error('Failed to copy password', e);
+            });
+          });
+        </script>
         <div class="container-fluid page-body-wrapper">
           <!-- partial:partials/_navbar.html -->
           <%- include('./components/topnav') %>
@@ -28,19 +42,19 @@
                   <div style="background-color: #ffca00; color: #121212; border-radius: 15px" class="alert">
                     <div class="alertbtn">
                       <a class="btn btn-warning btn-clipboard"
-                        style="background-color: #ddb100; color: black !important" data-clipboard-action="copy"
-                        data-clipboard-target="#clipboard">複製密碼</a>
+                         style="background-color: #ddb100; color: black !important"
+                         data-clipboard-action="copy"
+                         data-clipboard-target="#clipboard">複製密碼</a>
                     </div>
                     <% if (req.session.newaccount) { %>
                       面板上已為您建立了一個新帳戶<br>
-                      <% } %>
-                        <% if (req.session.password) { %>
-                          密碼已變更為 <span id="clipboard">
-                            <%= req.session.password %>
-                          </span> 如果您無法登入，請確保此處顯示的密碼
-                          <% } else { %>
-                            請檢查您的電子郵件以設定您的密碼
-                            <% } %>
+                    <% } %>
+                    <% if (req.session.password) { %>
+                      密碼已變更為 <span id="clipboard"><%= req.session.password %></span> 
+                      如果您無法登入，請確保此處顯示的密碼
+                    <% } else { %>
+                      請檢查您的電子郵件以設定您的密碼
+                    <% } %>
                   </div>
                   <% } %>
 

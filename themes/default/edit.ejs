@@ -31,7 +31,7 @@
                     <% if (req.query.num) { %>
                         <% if (!isNaN(parseFloat(req.query.num))) { %>
                             <% if (req.query.err == "TOOLITTLERAM" || req.query.err == "TOOLITTLEDISK" || req.query.err == "TOOLITTLECPU") { %>
-                                You must make a server with at least <b><%= req.query.num %></b>
+                                  您必須至少建立一個伺服器為 <b><%= req.query.num %></b>
                                 <% if (req.query.err.slice(-3) == "RAM") { %>
                                     MB RAM
                                 <% } else if (req.query.err.slice(-4) == "DISK") { %>
@@ -39,7 +39,7 @@
                                 <% } else { // CPU %>
                                     % CPU
                                 <% } %>
-                                if you want to modified a server with the server type you have selected.
+                                如果您想使用您選擇的伺服器類型修改伺服器
                             <% } else if (req.query.err == "TOOMUCHRAM" || req.query.err == "TOOMUCHDISK" || req.query.err == "TOOMUCHCPU") { %>
                                 With the selected server type, you can have a maximum of <b><%= req.query.num %></b>
                                 <% if (req.query.err.slice(-3) == "RAM") { %>
@@ -89,7 +89,7 @@
                         <input  style="border-radius: 15px; padding: 8px;" type="text" class="form-control" value="<%= serverinfo.attributes.name %> | 無法在此更改名稱，請使用面板">
                       </div>
                       <div class="form-group">
-                        <label for="InputCPU">CPU</label>
+                        <label for="InputCPU">CPU（核心）</label>
                         <input style="border-radius: 15px; padding: 8px;" type="number" class="form-control" id="InputCPU" placeholder="1" value="<%= serverinfo.attributes.limits.cpu/100 %>">
                       </div>
                       <div class="form-group">
